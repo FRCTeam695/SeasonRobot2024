@@ -24,18 +24,21 @@ public final class Constants {
         // trackwidthInches [12], maxAccelerationMetersPerSecond [13]}
         public static final double[] GOLDMODULE_CONSTANTS = { 338, 107, 311, 29, 5.70, 15.82, 15.82, 4 * Math.PI, 0.015,
                 1, 6.35, 21.5, 24.5, Math.PI };
-        public static final double[] QB_CONSTANTS = { 351, 229, 169, 207, 8.14, 10.9, 10.9, 4 * Math.PI, 0.015, 1, 6.92,
-                19, 19, Math.PI };
+        public static final double[] QB_CONSTANTS = { 351, 229, 169, 207, 8.14, 10.9, 10.9, 4 * Math.PI, 0.015, 
+                1, 6.92, 19, 19, Math.PI };
+        public static final double[] LITEBOT_CONSTANTS = { 0, 0, 0, 0, 6.12, 14.73, 14.73, 4 * Math.PI, 0.015, 
+                1, 4.49, 21, 24, Math.PI };
 
         public static final Map<String, double[]> ROBOT_MAP = new HashMap<String, double[]>() {
             {
                 put("GOLDMODULE", GOLDMODULE_CONSTANTS);
                 put("QB", QB_CONSTANTS);
+                put("LITEBOT", LITEBOT_CONSTANTS);
             }
         };
 
         // CHOOSE WHICH ROBOT YOU'RE USING
-        public static final double[] CHOSEN_CONSTANTS = ROBOT_MAP.get("QB");
+        public static final double[] CHOSEN_CONSTANTS = ROBOT_MAP.get("LITEBOT");
 
         // miscellaneous constants
         public static final double MAX_SPEED_METERS_PER_SECONDS = Units.feetToMeters(CHOSEN_CONSTANTS[5]);
