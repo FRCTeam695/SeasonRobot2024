@@ -5,6 +5,7 @@
 package frc.robot;
 
 import frc.robot.commands.SwerveDriveCommand;
+import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -30,9 +31,11 @@ import com.pathplanner.lib.auto.NamedCommands;
 public class RobotContainer {
 
   private final SwerveSubsystem m_swerveSubsystem = new SwerveSubsystem();
+  private final IntakeSubsystem m_intakeSubsystem = new IntakeSubsystem();
 
   private final XboxController controller = new XboxController(0);
   private final JoystickButton back_Button = new JoystickButton(controller, 7);
+  private final JoystickButton a_Button = new JoystickButton(controller, 1);
   private final JoystickButton x_Button = new JoystickButton(controller, 3);
   private final JoystickButton y_Button = new JoystickButton(controller, 4);
 
@@ -55,22 +58,36 @@ public class RobotContainer {
     defaultCommands();
 
     SmartDashboard.putData("Auto Chooser", autoChooser);
+    SmartDashboard.putNumber("Intake Speed", 0.5);
   }
 
   private void configureBindings() {
     // goes to a location
     x_Button.onTrue(m_swerveSubsystem.goToLocation(new Pose2d(3, 2.5, new Rotation2d(0))));
+  }
+
+  private void instantCommands() {
+
+    // zeroes heading on gyro
+    back_Button.onTrue(new InstantCommand(() -> {
+      m_swerveSubsystem.zeroHeading();
+    }, m_swerveSubsystem));
+
+    // intakes a note (this includes running the indexer)
+    a_Button.onTrue(new InstantCommand(() -> {
+      m_intakeSubsystem.setSpeed(0.1);
+    }, m_intakeSubsystem));
+
+    // turns off intake when button is let go
+    a_Button.onFalse(new InstantCommand(() -> {
+      m_intakeSubsystem.setSpeed(0);
+    }, m_intakeSubsystem));
 
     // resets odometry
     y_Button.onTrue(new InstantCommand(() -> {
       m_swerveSubsystem.resetOdometry(new Pose2d(0, 0, new Rotation2d(70)));
     }, m_swerveSubsystem));
-  }
 
-  private void instantCommands() {
-    back_Button.onTrue(new InstantCommand(() -> {
-      m_swerveSubsystem.zeroHeading();
-    }, m_swerveSubsystem));
   }
 
   private void defaultCommands() {

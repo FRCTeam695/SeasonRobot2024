@@ -109,4 +109,12 @@ public final class Constants {
                 Constants.VisionLimelight.ROBOT_TO_CAMERA_OFFSET_SIDEWAYS,
                 Constants.VisionLimelight.CAMERA_HEIGHT_METERS);
     }
+
+    public static class Intake {
+        public static final int INTAKE_MOTOR_1_PORT = 8;
+        public static final int INTAKE_MOTOR_2_PORT = 9;
+
+        public static final int INDEX_MOTOR_1_PORT = 53;
+        public static final int INDEX_MOTOR_2_PORT = 54;
+    }
 }
