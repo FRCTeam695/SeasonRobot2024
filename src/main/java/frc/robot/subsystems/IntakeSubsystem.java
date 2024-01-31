@@ -18,6 +18,17 @@ public class IntakeSubsystem extends SubsystemBase{
     DigitalInput beamBreak;
 
     double speed;
+
+    /*
+     * Stage keeps track of what stage of the intake we are in, there are two stages
+     * 
+     * 1. We are intaking at a high speed, this jams the note into our shooter, this is a problem as the
+     *    shooters need room to speed up before it comes in contact with the note when its time for shooting.
+     *    This calls for stage two.
+     * 
+     * 2. The note is currently in contact with the shooter wheels, we run the indexer backwards at 0.1 speed
+     *    until the break is not broken anymore.
+     */
     int stage;
 
 
@@ -32,9 +43,13 @@ public class IntakeSubsystem extends SubsystemBase{
 
         runSubsystemToSpeed(0);
         speed = 0;
-        stage = 0;
+        stage = 1;
     }
 
+    /*
+     * Depending on what stage it is the intake and/or the indexer is always being 
+     * set to this speed
+     */
     public void setSpeed(double speed){
         this.speed = speed;
     }
@@ -56,24 +71,23 @@ public class IntakeSubsystem extends SubsystemBase{
 
     @Override
     public void periodic(){
-        if(stage == 0){
-            if(beamBreak.get()){
+        if(stage == 1){  // stage 1 is jamming the note into the shooter motors until the beambreak is broken
+            if(beamBreak.get()){ // if beambreak is broken
                 speed = 0;
-                stage = 1;
+                stage = 2;
                 runSubsystemToSpeed(0);
             }
             else{
                 runSubsystemToSpeed(speed);
             }
         }
-        else if(stage == 1){
-            if(!beamBreak.get()){
-                stage = 0;
-                speed = 0;
-                runSubsystemToSpeed(0);
+        else if(stage == 2){  // stage 2 is rocking back the indexer until the beam is unbroken
+            if(!beamBreak.get()){ // if beambreak is unbroken
+                stage = 1;
+                runIndexerToSpeed(0);
             }
             else{
-                runSubsystemToSpeed(-0.1);
+                runIndexerToSpeed(-0.1);
             }
         }
     }
