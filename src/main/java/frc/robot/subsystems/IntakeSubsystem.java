@@ -4,7 +4,6 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
@@ -19,6 +18,7 @@ public class IntakeSubsystem extends SubsystemBase{
     DigitalInput beamBreak;
 
     double speed;
+    int stage;
 
 
     public IntakeSubsystem(){
@@ -32,6 +32,7 @@ public class IntakeSubsystem extends SubsystemBase{
 
         runSubsystemToSpeed(0);
         speed = 0;
+        stage = 0;
     }
 
     public void setSpeed(double speed){
@@ -55,11 +56,25 @@ public class IntakeSubsystem extends SubsystemBase{
 
     @Override
     public void periodic(){
-        if(beamBreak.get()){
-            speed = 0;
-            runSubsystemToSpeed(0);
-        }else{
-            runSubsystemToSpeed(speed);
+        if(stage == 0){
+            if(beamBreak.get()){
+                speed = 0;
+                stage = 1;
+                runSubsystemToSpeed(0);
+            }
+            else{
+                runSubsystemToSpeed(speed);
+            }
+        }
+        else if(stage == 1){
+            if(!beamBreak.get()){
+                stage = 0;
+                speed = 0;
+                runSubsystemToSpeed(0);
+            }
+            else{
+                runSubsystemToSpeed(-0.1);
+            }
         }
     }
 
