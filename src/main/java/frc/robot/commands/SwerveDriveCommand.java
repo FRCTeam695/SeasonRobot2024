@@ -16,7 +16,7 @@ import java.util.function.DoubleSupplier;
 
 public class SwerveDriveCommand extends Command {
   @SuppressWarnings({"PMD.UnusedPrivateField", "PMD.SingularField"})
-
+  
   private final SwerveSubsystem m_Subsystem;
   private final DoubleSupplier xSpeed, ySpeed, turningSpeed;
   private final boolean fieldOriented;

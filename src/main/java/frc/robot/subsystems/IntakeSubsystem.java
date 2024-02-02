@@ -16,6 +16,7 @@ public class IntakeSubsystem extends SubsystemBase{
     CANSparkMax indexMotor2;
 
     DigitalInput beamBreak;
+    boolean noteStatus;
 
     double speed;
 
@@ -40,7 +41,7 @@ public class IntakeSubsystem extends SubsystemBase{
         indexMotor2 = new CANSparkMax(Constants.Intake.INDEX_MOTOR_2_PORT, MotorType.kBrushless);
 
         beamBreak = new DigitalInput(0);
-
+        noteStatus = false;
         runSubsystemToSpeed(0);
         speed = 0;
         stage = 1;
@@ -54,42 +55,36 @@ public class IntakeSubsystem extends SubsystemBase{
         this.speed = speed;
     }
 
-    private void runSubsystemToSpeed(double speed){
+    public void setNoteStatus(boolean hasNote){
+        noteStatus = hasNote;
+    }
+
+    public boolean getBeamBreak(){
+        return beamBreak.get();
+    }
+
+    public boolean getNoteStatus(){
+        return noteStatus;
+    }
+
+    public void runSubsystemToSpeed(double speed){
         runIntakeToSpeed(speed);
         runIndexerToSpeed(speed);
     }
 
-    private void runIntakeToSpeed(double speed){
+    public void runIntakeToSpeed(double speed){
         intakeMotor1.set(-speed);
         intakeMotor2.set(-speed);
     }
 
-    private void runIndexerToSpeed(double speed){
+    public void runIndexerToSpeed(double speed){
         indexMotor1.set(speed);
         indexMotor2.set(speed);
     }
 
     @Override
     public void periodic(){
-        if(stage == 1){  // stage 1 is jamming the note into the shooter motors until the beambreak is broken
-            if(beamBreak.get()){ // if beambreak is broken
-                speed = 0;
-                stage = 2;
-                runSubsystemToSpeed(0);
-            }
-            else{
-                runSubsystemToSpeed(speed);
-            }
-        }
-        else if(stage == 2){  // stage 2 is rocking back the indexer until the beam is unbroken
-            if(!beamBreak.get()){ // if beambreak is unbroken
-                stage = 1;
-                runIndexerToSpeed(0);
-            }
-            else{
-                runIndexerToSpeed(-0.1);
-            }
-        }
+        
     }
 
 
