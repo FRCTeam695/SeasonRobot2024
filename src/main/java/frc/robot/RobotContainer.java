@@ -84,17 +84,17 @@ public class RobotContainer {
     //x_Button.onTrue(m_swerveSubsystem.goToLocation(new Pose2d(3, 2.5, new Rotation2d(0))));
 
     // intakes a note (this includes running the indexer)
-    intake_Button.onTrue(
+    left_Bumper.onTrue(
       intake());
 
-    shoot_Button.onTrue(
-      shoot()
+    a_Button.onTrue(
+      shoot().withTimeout(2)
     );
 
     indexButton11.onTrue(intake().andThen(shoot().withTimeout(2)));
 
 
-    right_Bumper.whileTrue(run(()-> m_intakeSubsystem.runIntakeAndIndexerPercent(-0.1)));
+    right_Bumper.whileTrue(run(()-> m_intakeSubsystem.runIntakeAndIndexerPercent(-0.1), m_intakeSubsystem));
   }
 
   private Command intake() {
@@ -105,7 +105,7 @@ public class RobotContainer {
 
   private Command shoot() {
     return parallel(
-      m_ShooterSubsystem.runVelocity(shootStickAdjuster),
+      m_ShooterSubsystem.runVelocity(()-> (2221.0/5700.0)),
       waitUntil(m_ShooterSubsystem::isRunning)
         .andThen(waitUntil(m_ShooterSubsystem::shooterIsUpToSpeed))
         .andThen(run(()-> m_intakeSubsystem.runIndexerToSpeed(1))));
@@ -118,11 +118,6 @@ public class RobotContainer {
       m_swerveSubsystem.zeroHeading();
     }, m_swerveSubsystem));
 
-    // shoots note
-    //a_Button.onTrue(new InstantCommand(() -> {
-    //  m_intakeSubsystem.shoot();
-    //}, m_intakeSubsystem));
-
     // resets odometry
     y_Button.onTrue(new InstantCommand(() -> {
       m_swerveSubsystem.resetOdometry(new Pose2d(0, 0, new Rotation2d(70)));
@@ -131,7 +126,7 @@ public class RobotContainer {
   }
 
   private void defaultCommands() {
-    //m_swerveSubsystem.setDefaultCommand(new SwerveDriveCommand(m_swerveSubsystem, left_xAxis, left_yAxis, right_xAxis, true));
+    m_swerveSubsystem.setDefaultCommand(new SwerveDriveCommand(m_swerveSubsystem, left_xAxis, left_yAxis, right_xAxis, true));
     m_ShooterSubsystem.setDefaultCommand(m_ShooterSubsystem.runVelocity(()-> 0));
     m_intakeSubsystem.setDefaultCommand(new RunCommand(() -> {m_intakeSubsystem.runIntakeAndIndexerPercent(0.0);}, m_intakeSubsystem));
   }
