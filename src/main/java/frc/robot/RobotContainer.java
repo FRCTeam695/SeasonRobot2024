@@ -50,6 +50,8 @@ public class RobotContainer {
   private final JoystickButton right_Bumper = new JoystickButton(controller, 6);
   private final JoystickButton shoot_Button = new JoystickButton(shootStick, 1);
   private final JoystickButton intake_Button = new JoystickButton(intakeStick, 1);
+  private final JoystickButton indexButton11 = new JoystickButton(intakeStick, 11);
+  
 
   private final DoubleSupplier left_xAxis = () -> (controller.getRawAxis(0));
   private final DoubleSupplier left_yAxis = () -> (controller.getRawAxis(1));
@@ -83,19 +85,30 @@ public class RobotContainer {
 
     // intakes a note (this includes running the indexer)
     intake_Button.onTrue(
-      race(
-        new IntakeCommand(m_intakeSubsystem, 0.3), 
-        m_ShooterSubsystem.runVelocity(()-> 0)));
+      intake());
 
     shoot_Button.onTrue(
-      parallel(
-        m_ShooterSubsystem.runVelocity(shootStickAdjuster),
-        waitUntil(m_ShooterSubsystem::isRunning)
-          .andThen(waitUntil(m_ShooterSubsystem::shooterIsUpToSpeed))
-          .andThen(run(()-> m_intakeSubsystem.runIndexerToSpeed(1))))
+      shoot()
     );
 
+    indexButton11.onTrue(intake().andThen(shoot().withTimeout(2)));
+
+
     right_Bumper.whileTrue(run(()-> m_intakeSubsystem.runIntakeAndIndexerPercent(-0.1)));
+  }
+
+  private Command intake() {
+    return race(
+      new IntakeCommand(m_intakeSubsystem, 0.3), 
+      m_ShooterSubsystem.runVelocity(()-> 0));
+  }
+
+  private Command shoot() {
+    return parallel(
+      m_ShooterSubsystem.runVelocity(shootStickAdjuster),
+      waitUntil(m_ShooterSubsystem::isRunning)
+        .andThen(waitUntil(m_ShooterSubsystem::shooterIsUpToSpeed))
+        .andThen(run(()-> m_intakeSubsystem.runIndexerToSpeed(1))));
   }
 
   private void instantCommands() {
