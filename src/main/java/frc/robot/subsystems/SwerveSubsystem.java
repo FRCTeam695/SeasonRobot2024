@@ -139,6 +139,12 @@ public class SwerveSubsystem extends SubsystemBase {
     //Sets all of the swerve modules
     public void setModules(SwerveModuleState[] desiredStates) {
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS);
+
+        SmartDashboard.putString("SWERVE M STATE FR", desiredStates[0].toString());
+        SmartDashboard.putString("SWERVE M STATE FL", desiredStates[1].toString());
+        SmartDashboard.putString("SWERVE M STATE BL", desiredStates[2].toString());
+        SmartDashboard.putString("SWERVE M STATE BR", desiredStates[3].toString());
+
         frontRight.setDesiredState(desiredStates[0], 1);
         frontLeft.setDesiredState(desiredStates[1], 2);
         bottomLeft.setDesiredState(desiredStates[2], 3);
@@ -163,6 +169,11 @@ public class SwerveSubsystem extends SubsystemBase {
 
     //Gets the position of the wheel as returned by the absolute encoder (check SwerveModule.java for further details)
     public double getAbsoluteEncoderValue(int motor) {
+        SmartDashboard.putNumber("FRONT LEFT MOTOR POSITION ABS", frontLeft.getAbsoluteEncoderRadians() * 180/Math.PI);
+        SmartDashboard.putNumber("FRONT RIGHT MOTOR POSITION ABS", frontRight.getAbsoluteEncoderRadians() * 180/Math.PI);
+        SmartDashboard.putNumber("BACK LEFT MOTOR POSITION ABS", bottomLeft.getAbsoluteEncoderRadians() * 180/Math.PI);
+        SmartDashboard.putNumber("BACK RIGHT MOTOR POSITION ABS", bottomRight.getAbsoluteEncoderRadians() * 180/Math.PI);
+
         switch (motor) {
             case 1:
                 return frontRight.getAbsoluteEncoderRadians();
@@ -195,6 +206,11 @@ public class SwerveSubsystem extends SubsystemBase {
 
     //Gets the relative encoder position of each swerve module (check SwerveModule.java for further details)
     public double getRelativeTurnEncoderValue(int motor) {
+        SmartDashboard.putNumber("FRONT LEFT MOTOR POSITION", frontLeft.getTurnPosition(true));
+        SmartDashboard.putNumber("FRONT RIGHT MOTOR POSITION", frontRight.getTurnPosition(true));
+        SmartDashboard.putNumber("BACK LEFT MOTOR POSITION", bottomLeft.getTurnPosition(true));
+        SmartDashboard.putNumber("BACK RIGHT MOTOR POSITION", bottomRight.getTurnPosition(true));
+
         switch (motor) {
             case 1:
                 return frontRight.getTurnPosition(false);

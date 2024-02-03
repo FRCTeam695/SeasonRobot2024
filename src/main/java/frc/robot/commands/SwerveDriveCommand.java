@@ -51,9 +51,9 @@ public class SwerveDriveCommand extends Command {
     Double Zj = -1 * turningSpeed.getAsDouble(); //Inverted because WPIlib coordinate system is weird, link to docs below
 
     // Deadband
-    Xj = Math.abs(Xj) > 0.01 ? Xj : 0;
-    Yj = Math.abs(Yj) > 0.01 ? Yj : 0;
-    Zj = Math.abs(Zj) > 0.01 ? Zj : 0;
+    Xj = Math.abs(Xj) > 0.1 ? Xj : 0;
+    Yj = Math.abs(Yj) > 0.1 ? Yj : 0;
+    Zj = Math.abs(Zj) > 0.1 ? Zj : 0;
 
     SmartDashboard.putNumber("Zj", Zj);
     SmartDashboard.putNumber("Xj", Xj);
@@ -71,6 +71,9 @@ public class SwerveDriveCommand extends Command {
     } else {
         chassisSpeeds = new ChassisSpeeds(Yj, Xj, Zj);
     }
+
+    m_Subsystem.getAbsoluteEncoderValue(1);
+    m_Subsystem.getRelativeTurnEncoderValue(1);
 
     m_Subsystem.driveSwerve(chassisSpeeds);
   }

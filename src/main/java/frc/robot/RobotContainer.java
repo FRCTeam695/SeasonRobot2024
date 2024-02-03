@@ -38,6 +38,8 @@ public class RobotContainer {
   private final JoystickButton a_Button = new JoystickButton(controller, 1);
   private final JoystickButton x_Button = new JoystickButton(controller, 3);
   private final JoystickButton y_Button = new JoystickButton(controller, 4);
+  private final JoystickButton left_Bumper = new JoystickButton(controller, 5);
+  private final JoystickButton right_Bumper = new JoystickButton(controller, 6);
 
   private final DoubleSupplier left_xAxis = () -> (controller.getRawAxis(0));
   private final DoubleSupplier left_yAxis = () -> (controller.getRawAxis(1));
@@ -74,16 +76,31 @@ public class RobotContainer {
     }, m_swerveSubsystem));
 
     // intakes a note (this includes running the indexer)
-    a_Button.onTrue(new InstantCommand(() -> {
-      m_intakeSubsystem.setSpeed(0.1);
+    right_Bumper.whileTrue(new InstantCommand(() -> {
+      m_intakeSubsystem.setSpeed(0.3);
     }, m_intakeSubsystem));
 
     // turns off intake when button is let go
-    a_Button.onFalse(new InstantCommand(() -> {
+    right_Bumper.onFalse(new InstantCommand(() -> {
       m_intakeSubsystem.setSpeed(0);
     }, m_intakeSubsystem));
 
-    // resets odometry
+    // discharges a note
+    left_Bumper.whileTrue(new InstantCommand(() -> {
+      m_intakeSubsystem.setSpeed(-0.1);
+    }, m_intakeSubsystem));
+
+    // turns off intake when button is let go
+    left_Bumper.onFalse(new InstantCommand(() -> {
+      m_intakeSubsystem.setSpeed(0);
+    }, m_intakeSubsystem));
+
+    // shoots note
+    a_Button.onTrue(new InstantCommand(() -> {
+      m_intakeSubsystem.shoot();
+    }, m_intakeSubsystem));
+
+    // resets odometrys
     y_Button.onTrue(new InstantCommand(() -> {
       m_swerveSubsystem.resetOdometry(new Pose2d(0, 0, new Rotation2d(70)));
     }, m_swerveSubsystem));

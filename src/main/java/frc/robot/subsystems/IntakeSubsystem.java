@@ -1,11 +1,14 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkFlex;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+
+//import java.lang.Thread;
 
 public class IntakeSubsystem extends SubsystemBase{
     
@@ -14,6 +17,9 @@ public class IntakeSubsystem extends SubsystemBase{
 
     CANSparkMax indexMotor1;
     CANSparkMax indexMotor2;
+
+    CANSparkFlex shootMotor1;
+    CANSparkFlex shootMotor2;
 
     DigitalInput beamBreak;
 
@@ -39,6 +45,9 @@ public class IntakeSubsystem extends SubsystemBase{
         indexMotor1 = new CANSparkMax(Constants.Intake.INDEX_MOTOR_1_PORT, MotorType.kBrushless);
         indexMotor2 = new CANSparkMax(Constants.Intake.INDEX_MOTOR_2_PORT, MotorType.kBrushless);
 
+        shootMotor1 = new CANSparkFlex(51, MotorType.kBrushless);
+        shootMotor2 = new CANSparkFlex(52, MotorType.kBrushless);
+
         beamBreak = new DigitalInput(0);
 
         runSubsystemToSpeed(0);
@@ -52,6 +61,37 @@ public class IntakeSubsystem extends SubsystemBase{
      */
     public void setSpeed(double speed){
         this.speed = speed;
+    }
+
+    public void shoot()
+    {
+        double s = 0.25;
+        shootMotor1.set(s);
+        shootMotor2.set(-s);
+
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+        }
+
+        indexMotor1.set(1);
+        indexMotor2.set(1);
+
+        try {
+            Thread.sleep(250);
+        } catch (InterruptedException e) {
+        }
+
+        indexMotor1.set(0);
+        indexMotor2.set(0);
+
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+        }
+
+        shootMotor1.set(0.0);
+        shootMotor2.set(0.0);
     }
 
     private void runSubsystemToSpeed(double speed){
@@ -87,7 +127,7 @@ public class IntakeSubsystem extends SubsystemBase{
                 runIndexerToSpeed(0);
             }
             else{
-                runIndexerToSpeed(-0.1);
+                runIndexerToSpeed(-0.02);
             }
         }
     }
