@@ -57,7 +57,7 @@ public class SwerveModule{
 
         //Creates the PID controller for turning
         //turningPidController = new PIDController(0.015, 0.0, 0.0);
-        turningPidController = new PIDController(0.007, 0.0, 0.0);
+        turningPidController = new PIDController(Constants.Swerve.THETA_KP_VALUE, 0.0, 0.0);
         turningPidController.enableContinuousInput(-180, 180); //Tells the PID controller that 180 and -180 are at the same place
 
         //Setpoint is used cus when wheel turn ccw abs encoder turn ccw but relative encoder turn cc

@@ -8,14 +8,14 @@ import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.IntakeSubsystem;
-import frc.robot.subsystems.ShooterSubsubsystem;
+import frc.robot.subsystems.ShooterSubsystem;
 
 public class ShootCommand extends Command {
-  ShooterSubsubsystem m_ShooterSubsubsystem;
+  ShooterSubsystem m_ShooterSubsubsystem;
   IntakeSubsystem m_IntakeSubsystem;
   /** Creates a new ShootCommand. */
   DoubleSupplier velocity1;
-  public ShootCommand(ShooterSubsubsystem m_ShooterSubsubsystem, IntakeSubsystem m_IntakeSubsystem) {
+  public ShootCommand(ShooterSubsystem m_ShooterSubsubsystem, IntakeSubsystem m_IntakeSubsystem) {
     this.m_ShooterSubsubsystem = m_ShooterSubsubsystem;
     this.m_IntakeSubsystem = m_IntakeSubsystem;
     velocity1 = () -> (100);

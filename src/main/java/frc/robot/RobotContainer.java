@@ -4,17 +4,22 @@
 
 package frc.robot;
 
+import frc.robot.commands.IntakeCommand;
 import frc.robot.commands.SwerveDriveCommand;
 import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import static edu.wpi.first.wpilibj2.command.Commands.*;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.PrintCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 
 import java.util.function.DoubleSupplier;
@@ -31,19 +36,25 @@ import com.pathplanner.lib.auto.NamedCommands;
 public class RobotContainer {
 
   private final SwerveSubsystem m_swerveSubsystem = new SwerveSubsystem();
+  private final ShooterSubsystem m_ShooterSubsystem = new ShooterSubsystem();
   private final IntakeSubsystem m_intakeSubsystem = new IntakeSubsystem();
 
   private final XboxController controller = new XboxController(0);
+  private final Joystick shootStick = new Joystick(1);
+  private final Joystick intakeStick = new Joystick(2);
   private final JoystickButton back_Button = new JoystickButton(controller, 7);
   private final JoystickButton a_Button = new JoystickButton(controller, 1);
   private final JoystickButton x_Button = new JoystickButton(controller, 3);
   private final JoystickButton y_Button = new JoystickButton(controller, 4);
   private final JoystickButton left_Bumper = new JoystickButton(controller, 5);
   private final JoystickButton right_Bumper = new JoystickButton(controller, 6);
+  private final JoystickButton shoot_Button = new JoystickButton(shootStick, 1);
+  private final JoystickButton intake_Button = new JoystickButton(intakeStick, 1);
 
   private final DoubleSupplier left_xAxis = () -> (controller.getRawAxis(0));
   private final DoubleSupplier left_yAxis = () -> (controller.getRawAxis(1));
   private final DoubleSupplier right_xAxis = () -> (controller.getRawAxis(4));
+  private final DoubleSupplier shootStickAdjuster = () -> 1 - ((shootStick.getRawAxis(3)) + 1)/2.0;
 
   private final SendableChooser<Command> autoChooser;
 
@@ -61,11 +72,30 @@ public class RobotContainer {
 
     SmartDashboard.putData("Auto Chooser", autoChooser);
     SmartDashboard.putNumber("Intake Speed", 0.5);
+
+    SmartDashboard.putData("Intake Subsytem", m_intakeSubsystem);
+    SmartDashboard.putData("Shooter Subsytem", m_ShooterSubsystem);
   }
 
   private void configureBindings() {
     // goes to a location
-    x_Button.onTrue(m_swerveSubsystem.goToLocation(new Pose2d(3, 2.5, new Rotation2d(0))));
+    //x_Button.onTrue(m_swerveSubsystem.goToLocation(new Pose2d(3, 2.5, new Rotation2d(0))));
+
+    // intakes a note (this includes running the indexer)
+    intake_Button.onTrue(
+      race(
+        new IntakeCommand(m_intakeSubsystem, 0.3), 
+        m_ShooterSubsystem.runVelocity(()-> 0)));
+
+    shoot_Button.onTrue(
+      parallel(
+        m_ShooterSubsystem.runVelocity(shootStickAdjuster),
+        waitUntil(m_ShooterSubsystem::isRunning)
+          .andThen(waitUntil(m_ShooterSubsystem::shooterIsUpToSpeed))
+          .andThen(run(()-> m_intakeSubsystem.runIndexerToSpeed(1))))
+    );
+
+    right_Bumper.whileTrue(run(()-> m_intakeSubsystem.runIntakeAndIndexerPercent(-0.1)));
   }
 
   private void instantCommands() {
@@ -75,32 +105,12 @@ public class RobotContainer {
       m_swerveSubsystem.zeroHeading();
     }, m_swerveSubsystem));
 
-    // intakes a note (this includes running the indexer)
-    right_Bumper.whileTrue(new InstantCommand(() -> {
-      m_intakeSubsystem.setSpeed(0.3);
-    }, m_intakeSubsystem));
-
-    // turns off intake when button is let go
-    right_Bumper.onFalse(new InstantCommand(() -> {
-      m_intakeSubsystem.setSpeed(0);
-    }, m_intakeSubsystem));
-
-    // discharges a note
-    left_Bumper.whileTrue(new InstantCommand(() -> {
-      m_intakeSubsystem.setSpeed(-0.1);
-    }, m_intakeSubsystem));
-
-    // turns off intake when button is let go
-    left_Bumper.onFalse(new InstantCommand(() -> {
-      m_intakeSubsystem.setSpeed(0);
-    }, m_intakeSubsystem));
-
     // shoots note
-    a_Button.onTrue(new InstantCommand(() -> {
-      m_intakeSubsystem.shoot();
-    }, m_intakeSubsystem));
+    //a_Button.onTrue(new InstantCommand(() -> {
+    //  m_intakeSubsystem.shoot();
+    //}, m_intakeSubsystem));
 
-    // resets odometrys
+    // resets odometry
     y_Button.onTrue(new InstantCommand(() -> {
       m_swerveSubsystem.resetOdometry(new Pose2d(0, 0, new Rotation2d(70)));
     }, m_swerveSubsystem));
@@ -108,8 +118,11 @@ public class RobotContainer {
   }
 
   private void defaultCommands() {
-    m_swerveSubsystem.setDefaultCommand(new SwerveDriveCommand(m_swerveSubsystem, left_xAxis, left_yAxis, right_xAxis, true));
+    //m_swerveSubsystem.setDefaultCommand(new SwerveDriveCommand(m_swerveSubsystem, left_xAxis, left_yAxis, right_xAxis, true));
+    m_ShooterSubsystem.setDefaultCommand(m_ShooterSubsystem.runVelocity(()-> 0));
+    m_intakeSubsystem.setDefaultCommand(new RunCommand(() -> {m_intakeSubsystem.runIntakeAndIndexerPercent(0.0);}, m_intakeSubsystem));
   }
+
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.

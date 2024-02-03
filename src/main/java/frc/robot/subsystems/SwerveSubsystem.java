@@ -246,9 +246,9 @@ public class SwerveSubsystem extends SubsystemBase {
     public void periodic() {
 
 
-        if(LimelightHelpers.getLatestResults("").targetingResults.targets_Fiducials.length >= 2){
-            resetOdometry(LimelightHelpers.getBotPose2d_wpiBlue(""));
-        }
+        //if(LimelightHelpers.getLatestResults("").targetingResults.targets_Fiducials.length >= 2){
+        //    resetOdometry(LimelightHelpers.getBotPose2d_wpiBlue(""));
+        //}
 
         odometry.update(new Rotation2d(getHeading() * Math.PI / 180),
                 new SwerveModulePosition[] { frontRight.getPosition(), frontLeft.getPosition(),

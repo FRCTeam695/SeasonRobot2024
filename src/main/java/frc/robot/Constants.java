@@ -38,7 +38,7 @@ public final class Constants {
                 1, 6.35, 21.5, 24.5, Math.PI, 150.0 / 7, 1 };
         public static final double[] QB_CONSTANTS = { 351, 229, 169, 207, 8.14, 10.9, 10.9, 4 * Math.PI, 0.015, 
                 1, 6.92, 19, 19, Math.PI, 150.0 / 7, 1 };
-        public static final double[] LITEBOT_CONSTANTS = { 194, -5, 2, 268, 6.12, 14.73, 14.73, 4 * Math.PI, 0.0000001, 
+        public static final double[] LITEBOT_CONSTANTS = { 194, -5, 2, 268, 6.12, 14.73, 14.73, 4 * Math.PI, 0.007, 
                 1, 4.49, 21, 24, Math.PI, 12.8, 0 };
 
         public static final Map<String, double[]> ROBOT_MAP = new HashMap<String, double[]>() {

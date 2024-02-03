@@ -17,7 +17,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class ShooterSubsubsystem extends SubsystemBase {
+public class ShooterSubsystem extends SubsystemBase {
 
   private final CANSparkFlex shooterNeo1 = new CANSparkFlex(51, MotorType.kBrushless);
   private final CANSparkFlex shooterNeo2 = new CANSparkFlex(52, MotorType.kBrushless);
@@ -31,15 +31,15 @@ public class ShooterSubsubsystem extends SubsystemBase {
   private final SparkPIDController shooterNeo1PID = shooterNeo1.getPIDController();
   private final SparkPIDController shooterNeo2PID = shooterNeo2.getPIDController();
 
-  private double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput, maxRPM, setPoint;
+  private double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput, maxRPM, setPointRPM;
 
   /** Creates a new ExampleSubsystem. */
-  public ShooterSubsubsystem() {
+  public ShooterSubsystem() {
     shooterNeoEncoder1.setPosition(0);
     shooterNeoEncoder2.setPosition(0);
 
     // PID coefficients
-    kP = 0.000100;
+    kP = 0.000150;
     kI = 0;
     kD = 0;
     kIz = 0;
@@ -47,6 +47,7 @@ public class ShooterSubsubsystem extends SubsystemBase {
     kMaxOutput = 1;
     kMinOutput = -1;
     maxRPM = 5700;
+    setPointRPM = 0;
 
     // set PID coefficients
     shooterNeo1PID.setP(kP);
@@ -78,22 +79,31 @@ public class ShooterSubsubsystem extends SubsystemBase {
    *
    * @return a command
    */
-  public void setSpeed(DoubleSupplier speed) {
+  public void setPercentVBus(DoubleSupplier percentVBus) {
     // Inline construction of command goes here.
     // Subsystem::RunOnce implicitly requires `this` subsystem.
     // double voltage2 = voltage.getAsDouble();
-    shooterNeo1.set(-speed.getAsDouble());
-    shooterNeo2.set(speed.getAsDouble());
+    shooterNeo1.set(-percentVBus.getAsDouble());
+    shooterNeo2.set(percentVBus.getAsDouble());
 
   }
 
   public boolean shooterIsUpToSpeed(){
-    if(Math.abs(setPoint-shooterNeoEncoder2.getVelocity()) <= 10 && Math.abs(setPoint+shooterNeoEncoder1.getVelocity()) <= 10)
+
+    int deadband = 75;
+    if(Math.abs(setPointRPM-Math.abs(shooterNeoEncoder2.getVelocity())) <= deadband 
+    && Math.abs(setPointRPM-Math.abs(shooterNeoEncoder1.getVelocity())) <= deadband)
     {
       return true;
     }
     return false;
   }
+
+  public boolean isRunning(){
+    return setPointRPM > 5;
+  }
+
+
 
   public Command runVelocity(DoubleSupplier velocity) {
     return run(
@@ -119,11 +129,11 @@ public class ShooterSubsubsystem extends SubsystemBase {
           // kMinOutput = min; kMaxOutput = max;
           // }
 
-          setPoint = velocity.getAsDouble() * maxRPM;
-          shooterNeo1PID.setReference(-setPoint, CANSparkMax.ControlType.kVelocity);
-          shooterNeo2PID.setReference(setPoint, CANSparkMax.ControlType.kVelocity);
+          setPointRPM = velocity.getAsDouble() * maxRPM;
+          shooterNeo1PID.setReference(setPointRPM, CANSparkMax.ControlType.kVelocity);
+          shooterNeo2PID.setReference(-setPointRPM, CANSparkMax.ControlType.kVelocity);
 
-          SmartDashboard.putNumber("SetPoint", setPoint);
+          SmartDashboard.putNumber("SetPoint", setPointRPM);
         });
   }
 
@@ -141,8 +151,9 @@ public class ShooterSubsubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    SmartDashboard.putNumber("Encoder 1 Velocity", -shooterNeoEncoder1.getVelocity());
-    SmartDashboard.putNumber("Encoder 2 Velocity", shooterNeoEncoder2.getVelocity());
+    SmartDashboard.putNumber("Encoder 1 Velocity", shooterNeoEncoder1.getVelocity());
+    SmartDashboard.putNumber("Encoder 2 Velocity", -shooterNeoEncoder2.getVelocity());
+    SmartDashboard.putBoolean("Up To Speed", shooterIsUpToSpeed());
   }
 
   @Override
