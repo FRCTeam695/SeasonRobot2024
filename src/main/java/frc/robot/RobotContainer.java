@@ -40,23 +40,18 @@ public class RobotContainer {
   private final IntakeSubsystem m_intakeSubsystem = new IntakeSubsystem();
 
   private final XboxController controller = new XboxController(0);
-  private final Joystick shootStick = new Joystick(1);
   private final Joystick intakeStick = new Joystick(2);
   private final JoystickButton back_Button = new JoystickButton(controller, 7);
   private final JoystickButton a_Button = new JoystickButton(controller, 1);
-  private final JoystickButton x_Button = new JoystickButton(controller, 3);
   private final JoystickButton y_Button = new JoystickButton(controller, 4);
   private final JoystickButton left_Bumper = new JoystickButton(controller, 5);
   private final JoystickButton right_Bumper = new JoystickButton(controller, 6);
-  private final JoystickButton shoot_Button = new JoystickButton(shootStick, 1);
-  private final JoystickButton intake_Button = new JoystickButton(intakeStick, 1);
   private final JoystickButton indexButton11 = new JoystickButton(intakeStick, 11);
-  
 
+  // Double suppliers
   private final DoubleSupplier left_xAxis = () -> (controller.getRawAxis(0));
   private final DoubleSupplier left_yAxis = () -> (controller.getRawAxis(1));
   private final DoubleSupplier right_xAxis = () -> (controller.getRawAxis(4));
-  private final DoubleSupplier shootStickAdjuster = () -> 1 - ((shootStick.getRawAxis(3)) + 1)/2.0;
 
   private final SendableChooser<Command> autoChooser;
 
@@ -73,7 +68,6 @@ public class RobotContainer {
     defaultCommands();
 
     SmartDashboard.putData("Auto Chooser", autoChooser);
-    SmartDashboard.putNumber("Intake Speed", 0.5);
 
     SmartDashboard.putData("Intake Subsytem", m_intakeSubsystem);
     SmartDashboard.putData("Shooter Subsytem", m_ShooterSubsystem);
@@ -83,52 +77,100 @@ public class RobotContainer {
     // goes to a location
     //x_Button.onTrue(m_swerveSubsystem.goToLocation(new Pose2d(3, 2.5, new Rotation2d(0))));
 
-    // intakes a note (this includes running the indexer)
+    /*
+     * LEFT BUMPER BINDING:
+     * 
+     * Intakes a note, runs the intake and the indexer
+     */
     left_Bumper.onTrue(
       intake());
 
+
+    /*
+     * "A" BUTTON BINDING:
+     * 
+     * Shoots the note, this involves spinning the shooter up to 
+     * speed and then feeding the note in with the indexer,
+     * stops after two seconds.
+     */
     a_Button.onTrue(
       shoot().withTimeout(2)
     );
 
-    indexButton11.onTrue(intake().andThen(shoot().withTimeout(2)));
-
-
+    /*
+     * RIGHT BUMPER BINDING:
+     * 
+     * Spits out a note using the intake and indexer
+     */
     right_Bumper.whileTrue(run(()-> m_intakeSubsystem.runIntakeAndIndexerPercent(-0.1), m_intakeSubsystem));
+
+
+    // This button was only used for testing purposes
+    indexButton11.onTrue(intake().andThen(shoot().withTimeout(2)));
   }
 
+  private void instantCommands() {
+
+    /*
+     * BACK BUTTON BINDING:
+     * 
+     * Resets the gyro, this is used mostly in testing and 
+     * shouldn't really be needed in a match unless something unexpected happens
+     */
+    back_Button.onTrue(new InstantCommand(() -> {
+      m_swerveSubsystem.zeroHeading();
+    }, m_swerveSubsystem));
+
+    
+    // This is just for testing purposes
+    y_Button.onTrue(new InstantCommand(() -> {
+      m_swerveSubsystem.resetOdometry(new Pose2d(0, 0, new Rotation2d(0)));
+    }, m_swerveSubsystem));
+
+  }
+
+  private void defaultCommands() {
+    /*
+     * Default command for drive train (swerve)
+     */
+    m_swerveSubsystem.setDefaultCommand(new SwerveDriveCommand(m_swerveSubsystem, left_xAxis, left_yAxis, right_xAxis, true));
+
+    /*
+     * Default command for shooter, this ensures that 
+     * while the shooter is not in use it is not running
+     */
+    m_ShooterSubsystem.setDefaultCommand(m_ShooterSubsystem.runVelocity(()-> 0));
+
+    /*
+     * Default command for the intake, this ensures that
+     * while the intake is not in use it is not running
+     */
+    m_intakeSubsystem.setDefaultCommand(new RunCommand(() -> {m_intakeSubsystem.runIntakeAndIndexerPercent(0.0);}, m_intakeSubsystem));
+  }
+
+  /*
+   * Runs the intake in while stopping the shooters,
+   * it is only organized in a parallel race group as
+   * the command would never end if we didn't
+   * (runVelocity would just keep going)
+   */
   private Command intake() {
     return race(
       new IntakeCommand(m_intakeSubsystem, 0.3), 
       m_ShooterSubsystem.runVelocity(()-> 0));
   }
 
+  /*
+   * Runs the shooters up to speed,
+   * when they are up to speed the indexer 
+   * will feed a note in full speed into the shooter
+   */
   private Command shoot() {
     return parallel(
       m_ShooterSubsystem.runVelocity(()-> (2221.0/5700.0)),
       waitUntil(m_ShooterSubsystem::isRunning)
         .andThen(waitUntil(m_ShooterSubsystem::shooterIsUpToSpeed))
         .andThen(run(()-> m_intakeSubsystem.runIndexerToSpeed(1))));
-  }
-
-  private void instantCommands() {
-
-    // zeroes heading on gyro
-    back_Button.onTrue(new InstantCommand(() -> {
-      m_swerveSubsystem.zeroHeading();
-    }, m_swerveSubsystem));
-
-    // resets odometry
-    y_Button.onTrue(new InstantCommand(() -> {
-      m_swerveSubsystem.resetOdometry(new Pose2d(0, 0, new Rotation2d(70)));
-    }, m_swerveSubsystem));
-
-  }
-
-  private void defaultCommands() {
-    m_swerveSubsystem.setDefaultCommand(new SwerveDriveCommand(m_swerveSubsystem, left_xAxis, left_yAxis, right_xAxis, true));
-    m_ShooterSubsystem.setDefaultCommand(m_ShooterSubsystem.runVelocity(()-> 0));
-    m_intakeSubsystem.setDefaultCommand(new RunCommand(() -> {m_intakeSubsystem.runIntakeAndIndexerPercent(0.0);}, m_intakeSubsystem));
   }
 
 

@@ -37,7 +37,6 @@ public class SwerveSubsystem extends SubsystemBase {
     private final SwerveModule bottomLeft;
     private final SwerveModule bottomRight;
 
-    private final Timer timer = new Timer();
     private final Field2d m_field = new Field2d();
 
     // creates the odometry class
@@ -258,10 +257,10 @@ public class SwerveSubsystem extends SubsystemBase {
 
 
         if(LimelightHelpers.getLatestResults("").targetingResults.targets_Fiducials.length >= 2){
-            odometry.addVisionMeasurement(LimelightHelpers.getBotPose2d_wpiBlue(""), timer.getFPGATimestamp());
+            odometry.addVisionMeasurement(LimelightHelpers.getBotPose2d_wpiBlue(""), Timer.getFPGATimestamp());
         }
 
-        odometry.updateWithTime(timer.getFPGATimestamp(), new Rotation2d(getHeading() * Math.PI / 180),
+        odometry.updateWithTime(Timer.getFPGATimestamp(), new Rotation2d(getHeading() * Math.PI / 180),
                 new SwerveModulePosition[] { frontRight.getPosition(), frontLeft.getPosition(),
                         bottomLeft.getPosition(), bottomRight.getPosition() });
         m_field.setRobotPose(getPose());
