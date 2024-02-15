@@ -26,7 +26,7 @@ public final class Constants {
             wheelCircumferenceInches [7],
             turningKPval [8],
             profiledKPval [9],
-            maxVelocityMetersPerSec,
+            maxVelocityMetersPerSec [10],
             wheelbaseInches [11],
             trackwidthInches [12],
             maxAccelerationMetersPerSecond [13],
@@ -129,5 +129,21 @@ public final class Constants {
 
         public static final int INDEX_MOTOR_1_PORT = 53;
         public static final int INDEX_MOTOR_2_PORT = 54;
+    }
+
+    public static class Arm {
+        public static final int ARM_ENCODER_PORT = 9;
+
+        public static final double MAX_VELOCITY = 0;
+        public static final double MAX_ACCELERATION = 0;
+
+        public static final int KP = 0;
+        public static final int KD = 0;
+        public static final int KI = 0;
+
+        public static final int KS = 0;
+        public static final int KG = 0;
+        public static final int KV = 0;
+        public static final int KA = 0;
     }
 }

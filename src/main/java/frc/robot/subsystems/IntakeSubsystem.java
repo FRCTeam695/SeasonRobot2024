@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkBase.IdleMode;
 import com.revrobotics.CANSparkFlex;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 
@@ -30,6 +31,9 @@ public class IntakeSubsystem extends SubsystemBase{
 
         indexMotor1 = new CANSparkMax(Constants.Intake.INDEX_MOTOR_1_PORT, MotorType.kBrushless);
         indexMotor2 = new CANSparkMax(Constants.Intake.INDEX_MOTOR_2_PORT, MotorType.kBrushless);
+
+        indexMotor1.setIdleMode(IdleMode.kBrake);
+        indexMotor2.setIdleMode(IdleMode.kBrake);
 
         beamBreak = new DigitalInput(0);
         noteStatus = false;

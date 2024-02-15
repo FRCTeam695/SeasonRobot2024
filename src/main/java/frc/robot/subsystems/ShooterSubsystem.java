@@ -12,7 +12,6 @@ import com.revrobotics.SparkPIDController;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 import com.revrobotics.CANSparkMax;
 
-import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -37,7 +36,8 @@ public class ShooterSubsystem extends SubsystemBase {
   public ShooterSubsystem() {
     shooterNeoEncoder1.setPosition(0);
     shooterNeoEncoder2.setPosition(0);
-
+    shooterNeo1.enableVoltageCompensation(12);
+    shooterNeo2.enableVoltageCompensation(12);
     // PID coefficients
     kP = 0.000150;
     kI = 0;
@@ -99,10 +99,19 @@ public class ShooterSubsystem extends SubsystemBase {
     return false;
   }
 
+  public boolean shooterIsNotUpToSpeed(){
+    int deadband = 75;
+    if(Math.abs(setPointRPM-Math.abs(shooterNeoEncoder2.getVelocity())) <= deadband 
+    && Math.abs(setPointRPM-Math.abs(shooterNeoEncoder1.getVelocity())) <= deadband)
+    {
+      return false;
+    }
+    return true;
+  }
+
   public boolean isRunning(){
     return setPointRPM > 5;
   }
-
 
 
   public Command runVelocity(DoubleSupplier velocity) {

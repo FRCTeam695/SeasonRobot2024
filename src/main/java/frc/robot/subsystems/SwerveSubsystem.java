@@ -257,7 +257,11 @@ public class SwerveSubsystem extends SubsystemBase {
 
 
         if(LimelightHelpers.getLatestResults("").targetingResults.targets_Fiducials.length >= 2){
+            //gets the total latency from the limelight
+            double latency = LimelightHelpers.getLatency_Capture("") + LimelightHelpers.getLatency_Pipeline("");
+            //System.out.println("Updating Pose");
             odometry.addVisionMeasurement(LimelightHelpers.getBotPose2d_wpiBlue(""), Timer.getFPGATimestamp());
+
         }
 
         odometry.updateWithTime(Timer.getFPGATimestamp(), new Rotation2d(getHeading() * Math.PI / 180),

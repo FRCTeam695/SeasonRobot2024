@@ -4,6 +4,7 @@
 
 package frc.robot.commands;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -50,10 +51,11 @@ public class SwerveDriveCommand extends Command {
     Double Yj = -1 * ySpeed.getAsDouble(); //The controller is inverted
     Double Zj = -1 * turningSpeed.getAsDouble(); //Inverted because WPIlib coordinate system is weird, link to docs below
 
-    // Deadband
-    Xj = Math.abs(Xj) > 0.1 ? Xj : 0;
-    Yj = Math.abs(Yj) > 0.1 ? Yj : 0;
-    Zj = Math.abs(Zj) > 0.1 ? Zj : 0;
+    // JPK:  scaled deadband
+    double db = 0.2;
+    Xj = MathUtil.applyDeadband(Xj, db);
+    Yj = MathUtil.applyDeadband(Yj, db);
+    Zj = MathUtil.applyDeadband(Zj, db);
 
     SmartDashboard.putNumber("Zj", Zj);
     SmartDashboard.putNumber("Xj", Xj);
@@ -71,9 +73,6 @@ public class SwerveDriveCommand extends Command {
     } else {
         chassisSpeeds = new ChassisSpeeds(Yj, Xj, Zj);
     }
-
-    m_Subsystem.getAbsoluteEncoderValue(1);
-    m_Subsystem.getRelativeTurnEncoderValue(1);
 
     m_Subsystem.driveSwerve(chassisSpeeds);
   }
