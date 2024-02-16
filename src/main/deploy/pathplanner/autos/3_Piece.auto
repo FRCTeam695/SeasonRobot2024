@@ -24,12 +24,6 @@
           }
         },
         {
-          "type": "named",
-          "data": {
-            "name": "Intake Note"
-          }
-        },
-        {
           "type": "path",
           "data": {
             "pathName": "Note1_2_Score"
@@ -45,12 +39,6 @@
           "type": "path",
           "data": {
             "pathName": "Score_2_Note2"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Intake Note"
           }
         },
         {

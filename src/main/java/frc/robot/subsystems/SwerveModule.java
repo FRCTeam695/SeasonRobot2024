@@ -5,6 +5,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -40,22 +41,23 @@ public class SwerveModule{
         falconlimit.triggerThresholdTime = 0;
 
         //Creates and configs drive motor
-        driveMotor = new TalonFX(driveMotorId, "rio");
+        driveMotor = new TalonFX(driveMotorId, "drivetrain");
         driveMotor.configFactoryDefault();
         driveMotor.setNeutralMode(NeutralMode.Brake);
         driveMotor.configSupplyCurrentLimit(falconlimit);
 
         //Creates and configs turn motor
-        turnMotor = new TalonFX(turnMotorId, "rio");
+        turnMotor = new TalonFX(turnMotorId, "drivetrain");
         turnMotor.configFactoryDefault();
         turnMotor.setNeutralMode(NeutralMode.Brake);
         turnMotor.configSupplyCurrentLimit(falconlimit);
 
         //Absolute encoder
-        absoluteEncoder = new WPI_CANCoder(TurnCANCoderId, "rio");
+        absoluteEncoder = new WPI_CANCoder(TurnCANCoderId, "drivetrain");
 
         //Creates the PID controller for turning
-        turningPidController = new PIDController(0.015, 0.0, 0.0);
+        //turningPidController = new PIDController(0.015, 0.0, 0.0);
+        turningPidController = new PIDController(Constants.Swerve.THETA_KP_VALUE, 0.0, 0.0);
         turningPidController.enableContinuousInput(-180, 180); //Tells the PID controller that 180 and -180 are at the same place
 
         //Setpoint is used cus when wheel turn ccw abs encoder turn ccw but relative encoder turn cc
@@ -80,7 +82,9 @@ public class SwerveModule{
 
         double turnDegreeValue = turnMotor.getSelectedSensorPosition() % (2048 * turningGearRatio) / (2048 * turningGearRatio) * 360;
 
-        turnDegreeValue = (setPoint * 180 / Math.PI) + ((setPoint * 180 / Math.PI) - turnDegreeValue); //Adjusts the value cause the falcon encoder is upside down compared to the wheel
+        if(Constants.Swerve.isMK4i == 1){
+            turnDegreeValue = (setPoint * 180 / Math.PI) + ((setPoint * 180 / Math.PI) - turnDegreeValue); //Adjusts the value cause the falcon encoder is upside down compared to the wheel
+        }
 
         //Binds the value between -180 and 180 degrees
         while (turnDegreeValue > 180) {
@@ -165,9 +169,20 @@ public class SwerveModule{
         state = SwerveModuleState.optimize(state, getState().angle);
         
         double setpoint = state.angle.getDegrees();
-        double turnMotorOutput = -1 * MathUtil.clamp(turningPidController.calculate(getState().angle.getDegrees(), setpoint), -1, 1);
-        //Multiply by -1 above because the falcon is upside down compared to the wheel
+        double turnMotorOutput = 0;
 
+        if(Constants.Swerve.isMK4i == 1){
+            turnMotorOutput = -1 * MathUtil.clamp(turningPidController.calculate(getState().angle.getDegrees(), setpoint), -1, 1);
+        }
+        else{
+            turnMotorOutput =  MathUtil.clamp(turningPidController.calculate(getState().angle.getDegrees(), setpoint), -1, 1);
+        }
+        //Multiply by -1 above because the falcon is upside down compared to the wheel on MK4i's
+        if(motor == 1) {
+            SmartDashboard.putNumber("Drive Motor 1 Output", state.speedMetersPerSecond / maxSpeedMPS);
+            SmartDashboard.putNumber("Turn Motor 1 Output", turnMotorOutput);
+        }
+        
         driveMotor.set(ControlMode.PercentOutput, state.speedMetersPerSecond / maxSpeedMPS);
         turnMotor.set(ControlMode.PercentOutput, turnMotorOutput);
     }

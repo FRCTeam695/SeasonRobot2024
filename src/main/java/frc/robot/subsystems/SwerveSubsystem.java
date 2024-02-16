@@ -17,15 +17,16 @@ import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.ReplanningConfig;
 
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -35,10 +36,11 @@ public class SwerveSubsystem extends SubsystemBase {
     private final SwerveModule frontLeft;
     private final SwerveModule bottomLeft;
     private final SwerveModule bottomRight;
+
     private final Field2d m_field = new Field2d();
 
     // creates the odometry class
-    public SwerveDriveOdometry odometry;
+    public SwerveDrivePoseEstimator odometry;
 
     // initialize the gyro
     private final AHRS gyro = new AHRS(SPI.Port.kMXP);
@@ -50,16 +52,16 @@ public class SwerveSubsystem extends SubsystemBase {
 
     public SwerveSubsystem() {
 
-        // Summer Swerve Chassis
+        // Creating the swerve modules
         frontRight = new SwerveModule(Constants.Swerve.FRONT_RIGHT_DRIVE_ID, Constants.Swerve.FRONT_RIGHT_TURN_ID, Constants.Swerve.FRONT_RIGHT_ABS_ENCODER_OFFSET, Constants.Swerve.FRONT_RIGHT_CANCODER_ID);
         frontLeft = new SwerveModule(Constants.Swerve.FRONT_LEFT_DRIVE_ID, Constants.Swerve.FRONT_LEFT_TURN_ID, Constants.Swerve.FRONT_LEFT_ABS_ENCODER_OFFSET, Constants.Swerve.FRONT_LEFT_CANCODER_ID);
         bottomLeft = new SwerveModule(Constants.Swerve.BACK_LEFT_DRIVE_ID, Constants.Swerve.BACK_LEFT_TURN_ID, Constants.Swerve.BACK_LEFT_ABS_ENCODER_OFFSET, Constants.Swerve.BACK_LEFT_CANCODER_ID);
         bottomRight = new SwerveModule(Constants.Swerve.BACK_RIGHT_DRIVE_ID, Constants.Swerve.BACK_RIGHT_TURN_ID, Constants.Swerve.BACK_RIGHT_ABS_ENCODER_OFFSET, Constants.Swerve.BACK_RIGHT_CANCODER_ID);
 
         SwerveDriveKinematics driveKinematics = Constants.Swerve.kDriveKinematics;
-        odometry = new SwerveDriveOdometry(driveKinematics, new Rotation2d(),
+        odometry = new SwerveDrivePoseEstimator(driveKinematics, new Rotation2d(),
                 new SwerveModulePosition[] { frontRight.getPosition(), frontLeft.getPosition(),
-                        bottomLeft.getPosition(), bottomRight.getPosition() });
+                        bottomLeft.getPosition(), bottomRight.getPosition() }, new Pose2d());
 
         tickStart = 0;
 
@@ -133,16 +135,25 @@ public class SwerveSubsystem extends SubsystemBase {
 
     //Gets the pose of the robot from the odometry, used in any self driving periods
     public Pose2d getPose() {
-        return odometry.getPoseMeters();
+        return odometry.getEstimatedPosition();
     }
 
     //Sets all of the swerve modules
     public void setModules(SwerveModuleState[] desiredStates) {
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS);
+
+        /*
+        SmartDashboard.putString("SWERVE M STATE FR", desiredStates[0].toString());
+        SmartDashboard.putString("SWERVE M STATE FL", desiredStates[1].toString());
+        SmartDashboard.putString("SWERVE M STATE BL", desiredStates[2].toString());
+        SmartDashboard.putString("SWERVE M STATE BR", desiredStates[3].toString());
+        */
+
         frontRight.setDesiredState(desiredStates[0], 1);
         frontLeft.setDesiredState(desiredStates[1], 2);
         bottomLeft.setDesiredState(desiredStates[2], 3);
         bottomRight.setDesiredState(desiredStates[3], 4);
+        
     }
 
     //returns the position of each swerve module (check SwerveModule.java for further details)
@@ -163,6 +174,13 @@ public class SwerveSubsystem extends SubsystemBase {
 
     //Gets the position of the wheel as returned by the absolute encoder (check SwerveModule.java for further details)
     public double getAbsoluteEncoderValue(int motor) {
+        /*
+        SmartDashboard.putNumber("FRONT LEFT MOTOR POSITION ABS", frontLeft.getAbsoluteEncoderRadians() * 180/Math.PI);
+        SmartDashboard.putNumber("FRONT RIGHT MOTOR POSITION ABS", frontRight.getAbsoluteEncoderRadians() * 180/Math.PI);
+        SmartDashboard.putNumber("BACK LEFT MOTOR POSITION ABS", bottomLeft.getAbsoluteEncoderRadians() * 180/Math.PI);
+        SmartDashboard.putNumber("BACK RIGHT MOTOR POSITION ABS", bottomRight.getAbsoluteEncoderRadians() * 180/Math.PI);
+        */
+
         switch (motor) {
             case 1:
                 return frontRight.getAbsoluteEncoderRadians();
@@ -195,6 +213,14 @@ public class SwerveSubsystem extends SubsystemBase {
 
     //Gets the relative encoder position of each swerve module (check SwerveModule.java for further details)
     public double getRelativeTurnEncoderValue(int motor) {
+
+        /*
+        SmartDashboard.putNumber("FRONT LEFT MOTOR POSITION", frontLeft.getTurnPosition(true));
+        SmartDashboard.putNumber("FRONT RIGHT MOTOR POSITION", frontRight.getTurnPosition(true));
+        SmartDashboard.putNumber("BACK LEFT MOTOR POSITION", bottomLeft.getTurnPosition(true));
+        SmartDashboard.putNumber("BACK RIGHT MOTOR POSITION", bottomRight.getTurnPosition(true));
+        */
+
         switch (motor) {
             case 1:
                 return frontRight.getTurnPosition(false);
@@ -231,15 +257,19 @@ public class SwerveSubsystem extends SubsystemBase {
 
 
         if(LimelightHelpers.getLatestResults("").targetingResults.targets_Fiducials.length >= 2){
-            resetOdometry(LimelightHelpers.getBotPose2d_wpiBlue(""));
+            //gets the total latency from the limelight
+            double latency = LimelightHelpers.getLatency_Capture("") + LimelightHelpers.getLatency_Pipeline("");
+            //System.out.println("Updating Pose");
+            odometry.addVisionMeasurement(LimelightHelpers.getBotPose2d_wpiBlue(""), Timer.getFPGATimestamp());
+
         }
 
-        odometry.update(new Rotation2d(getHeading() * Math.PI / 180),
+        odometry.updateWithTime(Timer.getFPGATimestamp(), new Rotation2d(getHeading() * Math.PI / 180),
                 new SwerveModulePosition[] { frontRight.getPosition(), frontLeft.getPosition(),
                         bottomLeft.getPosition(), bottomRight.getPosition() });
         m_field.setRobotPose(getPose());
 
-        SmartDashboard.putString("Robot Pose", odometry.getPoseMeters().toString());
+        SmartDashboard.putString("Robot Pose", odometry.getEstimatedPosition().toString());
     }
 
     //Allows us to manually reset the odometer, used with vision pose estimation

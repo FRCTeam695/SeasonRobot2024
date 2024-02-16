@@ -14,20 +14,32 @@ import edu.wpi.first.math.util.Units;
 public final class Constants {
 
     public static final class Swerve {
-
-        // stores the robot specific constants {frontRightOffset [0], frontLeftOffset
-        // [1], backLeftOffset [2],
-        // backRightOffset [3], drivingGearRatio [4], maxSpeedFeetPerSec [5],
-        // maxAngularSpeedFeetPerSec [6],
-        // wheelCircumferenceInches [7], turningKPval [8], profiledKPval [9],
-        // maxVelocityMetersPerSec, wheelbaseInches [11],
-        // trackwidthInches [12], maxAccelerationMetersPerSecond [13]}
+        /*
+        stores the robot specific constants {
+            frontRightOffset [0],
+            frontLeftOffset [1],
+            backLeftOffset [2],
+            backRightOffset [3],
+            drivingGearRatio [4],
+            maxSpeedFeetPerSec [5],
+            maxAngularSpeedFeetPerSec [6],
+            wheelCircumferenceInches [7],
+            turningKPval [8],
+            profiledKPval [9],
+            maxVelocityMetersPerSec [10],
+            wheelbaseInches [11],
+            trackwidthInches [12],
+            maxAccelerationMetersPerSecond [13],
+            turningGearRatio [14], 
+            isMK4i  (1 means it is MK4i, 0 means its not) [15]
+        }
+         */
         public static final double[] GOLDMODULE_CONSTANTS = { 338, 107, 311, 29, 5.70, 15.82, 15.82, 4 * Math.PI, 0.015,
-                1, 6.35, 21.5, 24.5, Math.PI };
+                1, 6.35, 21.5, 24.5, Math.PI, 150.0 / 7, 1 };
         public static final double[] QB_CONSTANTS = { 351, 229, 169, 207, 8.14, 10.9, 10.9, 4 * Math.PI, 0.015, 
-                1, 6.92, 19, 19, Math.PI };
-        public static final double[] LITEBOT_CONSTANTS = { 0, 0, 0, 0, 6.12, 14.73, 14.73, 4 * Math.PI, 0.015, 
-                1, 4.49, 21, 24, Math.PI };
+                1, 6.92, 19, 19, Math.PI, 150.0 / 7, 1 };
+        public static final double[] LITEBOT_CONSTANTS = { 194, -5, 2, 268, 6.12, 14.73, 14.73, 4 * Math.PI, 0.007, 
+                1, 4.49, 21, 24, Math.PI, 12.8, 0 };
 
         public static final Map<String, double[]> ROBOT_MAP = new HashMap<String, double[]>() {
             {
@@ -43,7 +55,7 @@ public final class Constants {
         // miscellaneous constants
         public static final double MAX_SPEED_METERS_PER_SECONDS = Units.feetToMeters(CHOSEN_CONSTANTS[5]);
         public static final double MAX_ANGULAR_SPEED_METERS_PER_SECOND = Units.feetToMeters(CHOSEN_CONSTANTS[6]);
-        public static final double TURNING_GEAR_RATIO = 150.0 / 7;
+        public static final double TURNING_GEAR_RATIO = CHOSEN_CONSTANTS[14];
         public static final double DRIVING_GEAR_RATIO = CHOSEN_CONSTANTS[4];
         public static final double WHEEL_CIRCUMFERENCE_METERS = Units.inchesToMeters(CHOSEN_CONSTANTS[7]);
         public static final double THETA_KP_VALUE = CHOSEN_CONSTANTS[8];
@@ -51,6 +63,7 @@ public final class Constants {
         public static final double MAX_VELOCITY_RADIANS_PER_SECOND = CHOSEN_CONSTANTS[10];
         public static final double MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED = CHOSEN_CONSTANTS[13];
         public static final double DISCRETIZE_TIMESTAMP = 0.02;
+        public static final double isMK4i = CHOSEN_CONSTANTS[15];
 
         // front right wheel
         public static final int FRONT_RIGHT_DRIVE_ID = 13;
@@ -116,5 +129,21 @@ public final class Constants {
 
         public static final int INDEX_MOTOR_1_PORT = 53;
         public static final int INDEX_MOTOR_2_PORT = 54;
+    }
+
+    public static class Arm {
+        public static final int ARM_ENCODER_PORT = 9;
+
+        public static final double MAX_VELOCITY = 0;
+        public static final double MAX_ACCELERATION = 0;
+
+        public static final int KP = 0;
+        public static final int KD = 0;
+        public static final int KI = 0;
+
+        public static final int KS = 0;
+        public static final int KG = 0;
+        public static final int KV = 0;
+        public static final int KA = 0;
     }
 }
