@@ -8,7 +8,6 @@ import frc.robot.commands.SwerveDriveCommand;
 import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.LEDSubsystem;
-import frc.robot.subsystems.NTTest;
 import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -43,11 +42,7 @@ public class RobotContainer {
   private final ShooterSubsystem m_ShooterSubsystem = new ShooterSubsystem();
   private final IntakeSubsystem m_intakeSubsystem = new IntakeSubsystem();
   private final LEDSubsystem m_LedSubsystem = new LEDSubsystem();
-<<<<<<< HEAD
   private final ArmSubsystem m_ArmSubsystem = new ArmSubsystem();
-=======
-  private final NTTest m_NTTest = new NTTest();
->>>>>>> ceca96f0cf35209095524994228e791aaee65d79
 
   private final XboxController controller = new XboxController(0);
   private final JoystickButton back_Button = new JoystickButton(controller, 7);
