@@ -13,11 +13,9 @@ import frc.robot.Constants;
 
 public class IntakeSubsystem extends SubsystemBase{
     
-    CANSparkMax intakeMotor1;
-    CANSparkMax intakeMotor2;
+    CANSparkMax intakeMotor;
 
-    CANSparkMax indexMotor1;
-    CANSparkMax indexMotor2;
+    CANSparkMax indexMotor;
 
     CANSparkFlex shootMotor1;
     CANSparkFlex shootMotor2;
@@ -26,14 +24,11 @@ public class IntakeSubsystem extends SubsystemBase{
     boolean noteStatus;
 
     public IntakeSubsystem(){
-        intakeMotor1 = new CANSparkMax(Constants.Intake.INTAKE_MOTOR_1_PORT, MotorType.kBrushless);
-        intakeMotor2 = new CANSparkMax(Constants.Intake.INTAKE_MOTOR_2_PORT, MotorType.kBrushless);
+        intakeMotor = new CANSparkMax(Constants.Intake.INTAKE_MOTOR_ID, MotorType.kBrushless);
 
-        indexMotor1 = new CANSparkMax(Constants.Intake.INDEX_MOTOR_1_PORT, MotorType.kBrushless);
-        indexMotor2 = new CANSparkMax(Constants.Intake.INDEX_MOTOR_2_PORT, MotorType.kBrushless);
+        indexMotor = new CANSparkMax(Constants.Intake.INDEX_MOTOR_ID, MotorType.kBrushless);
 
-        indexMotor1.setIdleMode(IdleMode.kBrake);
-        indexMotor2.setIdleMode(IdleMode.kBrake);
+        indexMotor.setIdleMode(IdleMode.kBrake);
 
         beamBreak = new DigitalInput(0);
         noteStatus = false;
@@ -58,12 +53,10 @@ public class IntakeSubsystem extends SubsystemBase{
     }
 
     public void runIntakeToSpeed(double speed){
-        intakeMotor1.set(-speed);
-        intakeMotor2.set(-speed);
+        intakeMotor.set(-speed);
     }
 
     public void runIndexerToSpeed(double speed){
-        indexMotor1.set(speed);
-        indexMotor2.set(speed);
+        indexMotor.set(-speed);
     }
 }

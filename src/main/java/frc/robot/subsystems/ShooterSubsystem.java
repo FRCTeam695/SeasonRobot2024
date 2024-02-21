@@ -15,11 +15,12 @@ import com.revrobotics.CANSparkMax;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 
 public class ShooterSubsystem extends SubsystemBase {
 
-  private final CANSparkFlex shooterNeo1 = new CANSparkFlex(51, MotorType.kBrushless);
-  private final CANSparkFlex shooterNeo2 = new CANSparkFlex(52, MotorType.kBrushless);
+  private final CANSparkFlex shooterNeo1 = new CANSparkFlex(Constants.Shooter.SHOOTER_MOTOR_ID_1, MotorType.kBrushless);
+  private final CANSparkFlex shooterNeo2 = new CANSparkFlex(Constants.Shooter.SHOOTER_MOTOR_ID_2, MotorType.kBrushless);
 
   // private final CANSparkFlex armNeo = new CANSparkFlex(0,
   // MotorType.kBrushless);

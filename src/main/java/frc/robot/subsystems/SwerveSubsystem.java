@@ -66,7 +66,7 @@ public class SwerveSubsystem extends SubsystemBase {
         tickStart = 0;
 
 
-        SmartDashboard.putData("field", m_field);
+        //SmartDashboard.putData("field", m_field);
 
         // jpk add:
         setRelativeTurnEncoderValue();  // sync the relative encoders (falcons) with the absolute encoders (cancoders)
@@ -258,8 +258,7 @@ public class SwerveSubsystem extends SubsystemBase {
 
         if(LimelightHelpers.getLatestResults("").targetingResults.targets_Fiducials.length >= 2){
             //gets the total latency from the limelight
-            double latency = LimelightHelpers.getLatency_Capture("") + LimelightHelpers.getLatency_Pipeline("");
-            //System.out.println("Updating Pose");
+            //double latency = LimelightHelpers.getLatency_Capture("") + LimelightHelpers.getLatency_Pipeline("");
             odometry.addVisionMeasurement(LimelightHelpers.getBotPose2d_wpiBlue(""), Timer.getFPGATimestamp());
 
         }

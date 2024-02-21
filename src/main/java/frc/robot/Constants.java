@@ -29,7 +29,7 @@ public final class Constants {
             maxVelocityMetersPerSec [10],
             wheelbaseInches [11],
             trackwidthInches [12],
-            maxAccelerationMetersPerSecond [13],
+            maxAngularAccelerationMetersPerSecond [13],
             turningGearRatio [14], 
             isMK4i  (1 means it is MK4i, 0 means its not) [15]
         }
@@ -40,17 +40,20 @@ public final class Constants {
                 1, 6.92, 19, 19, Math.PI, 150.0 / 7, 1 };
         public static final double[] LITEBOT_CONSTANTS = { 194, -5, 2, 268, 6.12, 14.73, 14.73, 4 * Math.PI, 0.007, 
                 1, 4.49, 21, 24, Math.PI, 12.8, 0 };
+        public static final double[] PRODUCTION_2024 = { 275, 274, 265, 250, 6.12, 14.73, 14.73, 4 * Math.PI, 0.01,
+                1, 4.49, 23.0, 23.0, Math.PI, 12.8, 0};
 
         public static final Map<String, double[]> ROBOT_MAP = new HashMap<String, double[]>() {
             {
                 put("GOLDMODULE", GOLDMODULE_CONSTANTS);
                 put("QB", QB_CONSTANTS);
                 put("LITEBOT", LITEBOT_CONSTANTS);
+                put("PRODUCTION_2024", PRODUCTION_2024);
             }
         };
 
         // CHOOSE WHICH ROBOT YOU'RE USING
-        public static final double[] CHOSEN_CONSTANTS = ROBOT_MAP.get("LITEBOT");
+        public static final double[] CHOSEN_CONSTANTS = ROBOT_MAP.get("PRODUCTION_2024");
 
         // miscellaneous constants
         public static final double MAX_SPEED_METERS_PER_SECONDS = Units.feetToMeters(CHOSEN_CONSTANTS[5]);
@@ -124,26 +127,37 @@ public final class Constants {
     }
 
     public static class Intake {
-        public static final int INTAKE_MOTOR_1_PORT = 8;
-        public static final int INTAKE_MOTOR_2_PORT = 9;
+        public static final int INTAKE_MOTOR_ID = 51;
 
-        public static final int INDEX_MOTOR_1_PORT = 53;
-        public static final int INDEX_MOTOR_2_PORT = 54;
+        public static final int INDEX_MOTOR_ID = 52;
     }
 
     public static class Arm {
-        public static final int ARM_ENCODER_PORT = 9;
+        public static final int PITCH_MOTOR_ID = 54;
+        public static final int ARM_ENCODER_PORT = 1;
 
-        public static final double MAX_VELOCITY = 0;
-        public static final double MAX_ACCELERATION = 0;
+        public static final double MAX_VELOCITY = 3;
+        public static final double MAX_ACCELERATION = 10;
 
-        public static final int KP = 0;
-        public static final int KD = 0;
-        public static final int KI = 0;
+        public static final double ABSOLUTE_ENCODER_OFFSET = 0.786;
 
-        public static final int KS = 0;
-        public static final int KG = 0;
-        public static final int KV = 0;
-        public static final int KA = 0;
+        public static final double KP = 1.5;
+        public static final double KD = 0;
+        public static final double KI = 0;
+
+        public static final double KS = 0;
+        public static final double KG = 0.05;
+        public static final double KV = 0;
+        public static final double KA = 0;
+
+        public static final double STOCKPILE_POSITION_RADIANS = 0.19;
+        public static final double INTAKE_POSITION_RADIANS = 0.99;
+        public static final double DRAINPIPE_POSITION_RADANS = 1.57;
+        public static final double FENDER_SHOT_POSITION_RADIANS = 0;
+    }
+
+    public static class Shooter {
+        public static final int SHOOTER_MOTOR_ID_1 = 50;
+        public static final int SHOOTER_MOTOR_ID_2 = 53;
     }
 }
