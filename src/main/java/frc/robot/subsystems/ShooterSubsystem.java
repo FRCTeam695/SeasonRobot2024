@@ -40,7 +40,7 @@ public class ShooterSubsystem extends SubsystemBase {
     shooterNeo1.enableVoltageCompensation(12);
     shooterNeo2.enableVoltageCompensation(12);
     // PID coefficients
-    kP = 0.000150;
+    kP = 0.000150;// * 2; **times two for amp
     kI = 0;
     kD = 0;
     kIz = 0;

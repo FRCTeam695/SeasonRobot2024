@@ -42,6 +42,7 @@ public class RobotContainer {
   private final ShooterSubsystem m_ShooterSubsystem = new ShooterSubsystem();
   private final IntakeSubsystem m_intakeSubsystem = new IntakeSubsystem();
   private final LEDSubsystem m_LedSubsystem = new LEDSubsystem();
+
   private final ArmSubsystem m_ArmSubsystem = new ArmSubsystem();
 
   private final XboxController controller = new XboxController(0);
@@ -201,7 +202,7 @@ public class RobotContainer {
   private Command intake() {
     return 
     runOnce(
-      ()-> m_ArmSubsystem.setGoal(Constants.Arm.INTAKE_POSITION_RADIANS), m_ArmSubsystem
+     ()-> m_ArmSubsystem.setGoal(Constants.Arm.INTAKE_POSITION_RADIANS), m_ArmSubsystem
     )
     .andThen(waitUntil(()-> m_ArmSubsystem.atGoal()))
     .andThen(
@@ -212,7 +213,8 @@ public class RobotContainer {
             run(()-> m_intakeSubsystem.runIntakeAndIndexerPercent(0.5), m_intakeSubsystem))
         , waitUntil(()-> m_intakeSubsystem.getBeamBreak())
       ),
-      m_ShooterSubsystem.runVelocity(()-> 0)))
+      m_ShooterSubsystem.runVelocity(()-> 0))
+      )
       .andThen(runOnce(()-> m_LedSubsystem.setColorToOrange()))
       .andThen(
           race(
@@ -234,7 +236,7 @@ public class RobotContainer {
    */
   private Command shoot() {
     return race(
-      m_ShooterSubsystem.runVelocity(()-> (2221.0/5700.0)),
+      m_ShooterSubsystem.runVelocity(()-> (550.0/5700.0)),//2221.0 for speaker; 550 for amp
       waitUntil(m_ShooterSubsystem::isRunning)
         .andThen(waitUntil(m_ShooterSubsystem::shooterIsUpToSpeed))
         .andThen(
@@ -249,6 +251,7 @@ public class RobotContainer {
             
     )
     .andThen(runOnce(()-> m_intakeSubsystem.setNoteStatus(false)))
+    //.andThen(m_ShooterSubsystem.runVelocity(()-> (550.0 / 5700.0)).withTimeout(2)) //amp shooting follow through
     ;
   }
 

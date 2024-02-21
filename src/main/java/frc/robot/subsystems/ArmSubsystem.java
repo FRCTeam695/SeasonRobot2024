@@ -107,6 +107,6 @@ public class ArmSubsystem extends SubsystemBase {
     if(goal == 0){
       goal = getAbsolutePosition();
     }
-    reachGoal(goal);
+    //reachGoal(goal);
   }
 }
