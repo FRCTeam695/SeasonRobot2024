@@ -14,11 +14,13 @@ import com.revrobotics.CANSparkMax;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
 public class ShooterSubsystem extends SubsystemBase {
 
+  private static final double amp_kp = 0.2;
   private final CANSparkFlex shooterNeo1 = new CANSparkFlex(Constants.Shooter.SHOOTER_MOTOR_ID_1, MotorType.kBrushless);
   private final CANSparkFlex shooterNeo2 = new CANSparkFlex(Constants.Shooter.SHOOTER_MOTOR_ID_2, MotorType.kBrushless);
 
@@ -66,13 +68,14 @@ public class ShooterSubsystem extends SubsystemBase {
     shooterNeo2PID.setOutputRange(kMinOutput, kMaxOutput);
 
     // // display PID coefficients on SmartDashboard
-    // SmartDashboard.putNumber("P Gain", kP);
-    // SmartDashboard.putNumber("I Gain", kI);
-    // SmartDashboard.putNumber("D Gain", kD);
-    // SmartDashboard.putNumber("I Zone", kIz);
-    // SmartDashboard.putNumber("Feed Forward", kFF);
-    // SmartDashboard.putNumber("Max Output", kMaxOutput);
-    // SmartDashboard.putNumber("Min Output", kMinOutput);
+    SmartDashboard.putNumber("P Gain", kP);
+    SmartDashboard.putNumber("I Gain", kI);
+    SmartDashboard.putNumber("D Gain", kD);
+    SmartDashboard.putNumber("I Zone", kIz);
+    SmartDashboard.putNumber("Feed Forward", kFF);
+    SmartDashboard.putNumber("Max Output", kMaxOutput);
+    SmartDashboard.putNumber("Min Output", kMinOutput);
+    SmartDashboard.putNumber("Set Rotations", 0);
   }
 
   /**
@@ -114,37 +117,49 @@ public class ShooterSubsystem extends SubsystemBase {
     return setPointRPM > 5;
   }
 
+  public Command closedLoopRotation(double rotations){
+
+    return new FunctionalCommand(
+      ()-> {
+        shooterNeo1PID.setP(amp_kp);
+        shooterNeo2PID.setP(amp_kp);
+        
+        shooterNeo1PID.setOutputRange(-1, 1);
+        shooterNeo2PID.setOutputRange(-1, 1);
+
+        shooterNeoEncoder1.setPosition(0);
+        shooterNeoEncoder2.setPosition(0);
+      },
+
+      ()-> {
+        shooterNeo1PID.setReference(rotations, CANSparkMax.ControlType.kPosition);
+        shooterNeo2PID.setReference(-rotations, CANSparkMax.ControlType.kPosition);
+      },
+
+      interrupted-> {},
+      ()-> (false)
+    , this);
+  }
+
 
   public Command runVelocity(DoubleSupplier velocity) {
-    return run(
+    return new FunctionalCommand(
+        ()-> {
+          shooterNeo1PID.setP(kP);
+          shooterNeo2PID.setP(kP);
+        },
         () -> {
-          // double p = SmartDashboard.getNumber("P Gain", 0);
-          // double i = SmartDashboard.getNumber("I Gain", 0);
-          // double d = SmartDashboard.getNumber("D Gain", 0);
-          // double iz = SmartDashboard.getNumber("I Zone", 0);
-          // double ff = SmartDashboard.getNumber("Feed Forward", 0);
-          // double max = SmartDashboard.getNumber("Max Output", 0);
-          // double min = SmartDashboard.getNumber("Min Output", 0);
-
-          // // if PID coefficients on SmartDashboard have changed, write new values to
-          // controller
-          // if((p != kP)) { neo1PID.setP(p); neo2PID.setP(p); kP = p; }
-          // if((i != kI)) { neo1PID.setI(i); neo2PID.setI(i); kI = i; }
-          // if((d != kD)) { neo1PID.setD(d); neo2PID.setD(d); kD = d; }
-          // if((iz != kIz)) { neo1PID.setIZone(iz); neo2PID.setIZone(iz); kIz = iz; }
-          // if((ff != kFF)) { neo1PID.setFF(ff); neo2PID.setFF(ff); kFF = ff; }
-          // if((max != kMaxOutput) || (min != kMinOutput)) {
-          // neo1PID.setOutputRange(min, max);
-          // neo2PID.setOutputRange(min, max);
-          // kMinOutput = min; kMaxOutput = max;
-          // }
-
           setPointRPM = velocity.getAsDouble() * maxRPM;
           shooterNeo1PID.setReference(setPointRPM, CANSparkMax.ControlType.kVelocity);
           shooterNeo2PID.setReference(-setPointRPM, CANSparkMax.ControlType.kVelocity);
 
           SmartDashboard.putNumber("SetPoint", setPointRPM);
-        });
+        },
+        interrupted-> {},
+        ()-> (false),
+        this
+        
+        );
   }
 
   /**
@@ -163,6 +178,8 @@ public class ShooterSubsystem extends SubsystemBase {
     // This method will be called once per scheduler run
     SmartDashboard.putNumber("Encoder 1 Velocity", shooterNeoEncoder1.getVelocity());
     SmartDashboard.putNumber("Encoder 2 Velocity", -shooterNeoEncoder2.getVelocity());
+    SmartDashboard.putNumber("Position 1", shooterNeoEncoder1.getPosition());
+    //SmartDashboard.putNumber("Setpoint", shooterNeo1PID.get)
     SmartDashboard.putBoolean("Up To Speed", shooterIsUpToSpeed());
   }
 

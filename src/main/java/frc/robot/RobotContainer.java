@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import frc.robot.commands.ArmDefaultCommand;
 import frc.robot.commands.SwerveDriveCommand;
 import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
@@ -19,9 +20,11 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
@@ -39,8 +42,8 @@ import com.pathplanner.lib.auto.NamedCommands;
 public class RobotContainer {
 
   private final SwerveSubsystem m_swerveSubsystem = new SwerveSubsystem();
-  private final ShooterSubsystem m_ShooterSubsystem = new ShooterSubsystem();
   private final IntakeSubsystem m_intakeSubsystem = new IntakeSubsystem();
+  private final ShooterSubsystem m_ShooterSubsystem = new ShooterSubsystem();
   private final LEDSubsystem m_LedSubsystem = new LEDSubsystem();
 
   private final ArmSubsystem m_ArmSubsystem = new ArmSubsystem();
@@ -90,7 +93,7 @@ public class RobotContainer {
     defaultCommands();
 
     SmartDashboard.putData("Auto Chooser", autoChooser);
-    SmartDashboard.putNumber("theta", 0.99);
+    //SmartDashboard.putNumber("theta", 0.99);
   }
 
   private void configureBindings() {
@@ -127,16 +130,12 @@ public class RobotContainer {
     //right_Bumper.whileTrue(run(()-> m_intakeSubsystem.runIntakeAndIndexerPercent(-0.1), m_intakeSubsystem));
 
     //stockpile
-    right_Bumper.onTrue(runOnce(()-> m_ArmSubsystem.setGoal(Constants.Arm.STOCKPILE_POSITION_RADIANS), m_ArmSubsystem));
+    //right_Bumper.onTrue(runOnce(()-> m_ArmSubsystem.setGoal(Constants.Arm.STOCKPILE_POSITION_RADIANS), m_ArmSubsystem));
+    right_Bumper.onTrue(goToAmpScorePosition());
 
-    //Intake angle
     a_Button.onTrue(runOnce(()-> m_ArmSubsystem.setGoal(SmartDashboard.getNumber("theta", 0.19)), m_ArmSubsystem));
 
-    //Stockpile
-    //left_Bumper.whileTrue(m_ArmSubsystem.goToHeight(0.14));
 
-    // This button was only used for testing purposes
-    //indexButton11.onTrue(intake().andThen(shoot().withTimeout(2)));
   }
 
   private void instantCommands() {
@@ -176,7 +175,12 @@ public class RobotContainer {
     /*
      * Default command for arm, this checks if we have a note or not,
      * and then moves the arm to the according position
+     * 
+     */
+
+    //m_ArmSubsystem.setDefaultCommand(new ArmDefaultCommand());
     
+     /*
     m_ArmSubsystem.setDefaultCommand(
       race(
         waitUntil(()-> m_intakeSubsystem.getNoteStatus()),
@@ -252,6 +256,21 @@ public class RobotContainer {
     )
     .andThen(runOnce(()-> m_intakeSubsystem.setNoteStatus(false)))
     //.andThen(m_ShooterSubsystem.runVelocity(()-> (550.0 / 5700.0)).withTimeout(2)) //amp shooting follow through
+    ;
+  }
+
+  public Command goToAmpScorePosition(){
+    return race(
+      waitUntil(m_intakeSubsystem::getBeamBreak),
+      run(()-> m_intakeSubsystem.runIndexerToSpeed(0.5), m_intakeSubsystem)
+    ).andThen(
+      race(
+        waitUntil(()-> (!m_intakeSubsystem.getBeamBreak())),
+        m_ShooterSubsystem.closedLoopRotation(0.5),
+        run(()-> m_intakeSubsystem.runIndexerToSpeed(0), m_intakeSubsystem)
+      )
+      .andThen(m_ShooterSubsystem.closedLoopRotation(0.75))
+    )
     ;
   }
 

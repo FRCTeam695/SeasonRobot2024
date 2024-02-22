@@ -5,7 +5,6 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -178,10 +177,6 @@ public class SwerveModule{
             turnMotorOutput =  MathUtil.clamp(turningPidController.calculate(getState().angle.getDegrees(), setpoint), -1, 1);
         }
         //Multiply by -1 above because the falcon is upside down compared to the wheel on MK4i's
-        if(motor == 1) {
-            SmartDashboard.putNumber("Drive Motor 1 Output", state.speedMetersPerSecond / maxSpeedMPS);
-            SmartDashboard.putNumber("Turn Motor 1 Output", turnMotorOutput);
-        }
         
         driveMotor.set(ControlMode.PercentOutput, state.speedMetersPerSecond / maxSpeedMPS);
         turnMotor.set(ControlMode.PercentOutput, turnMotorOutput);
