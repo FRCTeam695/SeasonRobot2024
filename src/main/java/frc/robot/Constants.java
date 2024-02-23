@@ -139,7 +139,7 @@ public final class Constants {
         public static final double MAX_VELOCITY = 3;
         public static final double MAX_ACCELERATION = 10;
 
-        public static final double ABSOLUTE_ENCODER_OFFSET = 0.786;
+        public static final double ABSOLUTE_ENCODER_OFFSET = 1.0435;
 
         public static final double KP = 1.5;
         public static final double KD = 0;
@@ -147,13 +147,17 @@ public final class Constants {
 
         public static final double KS = 0;
         public static final double KG = 0.05;
-        public static final double KV = 0;
+        public static final double KV = 0.2;
         public static final double KA = 0;
 
-        public static final double STOCKPILE_POSITION_RADIANS = 0.19;
+        public static final double STOCKPILE_POSITION_RADIANS = 0.3;
         public static final double INTAKE_POSITION_RADIANS = 0.99;
         public static final double DRAINPIPE_POSITION_RADANS = 1.57;
+        public static final double AMP_SCORE_RADIANS = 2.08;
         public static final double FENDER_SHOT_POSITION_RADIANS = 0;
+
+        public static final double MAX_POSITION_RADIANS = 2.17;
+        public static final double MIN_POSITION_RADIANS = STOCKPILE_POSITION_RADIANS;
     }
 
     public static class Shooter {

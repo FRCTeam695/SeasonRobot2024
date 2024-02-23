@@ -20,7 +20,6 @@ import frc.robot.Constants;
 
 public class ShooterSubsystem extends SubsystemBase {
 
-  private static final double amp_kp = 0.2;
   private final CANSparkFlex shooterNeo1 = new CANSparkFlex(Constants.Shooter.SHOOTER_MOTOR_ID_1, MotorType.kBrushless);
   private final CANSparkFlex shooterNeo2 = new CANSparkFlex(Constants.Shooter.SHOOTER_MOTOR_ID_2, MotorType.kBrushless);
 
@@ -117,12 +116,12 @@ public class ShooterSubsystem extends SubsystemBase {
     return setPointRPM > 5;
   }
 
-  public Command closedLoopRotation(double rotations){
+  public Command closedLoopRotation(double rotations, double kp_rot){
 
     return new FunctionalCommand(
       ()-> {
-        shooterNeo1PID.setP(amp_kp);
-        shooterNeo2PID.setP(amp_kp);
+        shooterNeo1PID.setP(kp_rot);
+        shooterNeo2PID.setP(kp_rot);
         
         shooterNeo1PID.setOutputRange(-1, 1);
         shooterNeo2PID.setOutputRange(-1, 1);
@@ -137,7 +136,7 @@ public class ShooterSubsystem extends SubsystemBase {
       },
 
       interrupted-> {},
-      ()-> (false)
+      ()-> (shooterNeoEncoder1.getPosition() >= rotations)
     , this);
   }
 

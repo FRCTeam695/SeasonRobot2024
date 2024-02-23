@@ -24,7 +24,6 @@ import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
@@ -51,14 +50,17 @@ public class RobotContainer {
   private final XboxController controller = new XboxController(0);
   private final JoystickButton back_Button = new JoystickButton(controller, 7);
   private final JoystickButton a_Button = new JoystickButton(controller, 1);
+  private final JoystickButton b_Button = new JoystickButton(controller, 2);
+    private final JoystickButton x_Button = new JoystickButton(controller, 3);
+
   private final JoystickButton y_Button = new JoystickButton(controller, 4);
   private final JoystickButton left_Bumper = new JoystickButton(controller, 5);
   private final JoystickButton right_Bumper = new JoystickButton(controller, 6);
 
-  //Network Table Subscribers
-  NetworkTableInstance inst = NetworkTableInstance.getDefault();
-  NetworkTable table = inst.getTable("SideCar");
-  StringSubscriber scoreLocationSub = NetworkTableInstance.getDefault().getStringTopic("Score Location").subscribe("");
+  //Network Table Stuff
+  private NetworkTableInstance inst = NetworkTableInstance.getDefault();
+  private NetworkTable table = inst.getTable("SideCar");
+  private StringSubscriber scoreLocationSub = NetworkTableInstance.getDefault().getStringTopic("Score Location").subscribe("");
 
   // Double suppliers
   private final DoubleSupplier left_xAxis = () -> (controller.getRawAxis(0));
@@ -130,11 +132,12 @@ public class RobotContainer {
     //right_Bumper.whileTrue(run(()-> m_intakeSubsystem.runIntakeAndIndexerPercent(-0.1), m_intakeSubsystem));
 
     //stockpile
-    //right_Bumper.onTrue(runOnce(()-> m_ArmSubsystem.setGoal(Constants.Arm.STOCKPILE_POSITION_RADIANS), m_ArmSubsystem));
-    right_Bumper.onTrue(goToAmpScorePosition());
+    right_Bumper.onTrue(armToPosition(Constants.Arm.AMP_SCORE_RADIANS));
+    b_Button.onTrue(sausage());
 
-    a_Button.onTrue(runOnce(()-> m_ArmSubsystem.setGoal(SmartDashboard.getNumber("theta", 0.19)), m_ArmSubsystem));
+    a_Button.onTrue(armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS));
 
+    x_Button.onTrue(flickToAmp());
 
   }
 
@@ -158,7 +161,7 @@ public class RobotContainer {
     /*
      * Default command for drive train (swerve)
      */
-    m_swerveSubsystem.setDefaultCommand(new SwerveDriveCommand(m_swerveSubsystem, left_xAxis, left_yAxis, right_xAxis, true));
+    //m_swerveSubsystem.setDefaultCommand(new SwerveDriveCommand(m_swerveSubsystem, left_xAxis, left_yAxis, right_xAxis, true));
 
     /*
      * Default command for shooter, this ensures that 
@@ -178,9 +181,9 @@ public class RobotContainer {
      * 
      */
 
-    //m_ArmSubsystem.setDefaultCommand(new ArmDefaultCommand());
+    m_ArmSubsystem.setDefaultCommand(ArmCommand());
     
-     /*
+    /*
     m_ArmSubsystem.setDefaultCommand(
       race(
         waitUntil(()-> m_intakeSubsystem.getNoteStatus()),
@@ -205,9 +208,7 @@ public class RobotContainer {
    */
   private Command intake() {
     return 
-    runOnce(
-     ()-> m_ArmSubsystem.setGoal(Constants.Arm.INTAKE_POSITION_RADIANS), m_ArmSubsystem
-    )
+    armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS)
     .andThen(waitUntil(()-> m_ArmSubsystem.atGoal()))
     .andThen(
     race(
@@ -222,7 +223,7 @@ public class RobotContainer {
       .andThen(runOnce(()-> m_LedSubsystem.setColorToOrange()))
       .andThen(
           race(
-            run(()-> m_intakeSubsystem.runIndexerToSpeed(-0.05)),
+            run(()-> m_intakeSubsystem.runIndexerToSpeed(-0.07)),
             waitUntil(()-> !m_intakeSubsystem.getBeamBreak())
           )
       )
@@ -259,19 +260,49 @@ public class RobotContainer {
     ;
   }
 
-  public Command goToAmpScorePosition(){
+  private Command sausage(){
     return race(
       waitUntil(m_intakeSubsystem::getBeamBreak),
       run(()-> m_intakeSubsystem.runIndexerToSpeed(0.5), m_intakeSubsystem)
     ).andThen(
       race(
         waitUntil(()-> (!m_intakeSubsystem.getBeamBreak())),
-        m_ShooterSubsystem.closedLoopRotation(0.5),
+        m_ShooterSubsystem.closedLoopRotation(0.5, 0.3),
         run(()-> m_intakeSubsystem.runIndexerToSpeed(0), m_intakeSubsystem)
       )
-      .andThen(m_ShooterSubsystem.closedLoopRotation(0.75))
+      .andThen(m_ShooterSubsystem.closedLoopRotation(0.5, 0.3))
     )
     ;
+  }
+
+  private Command flickToAmp(){
+    return m_ShooterSubsystem.closedLoopRotation(2, 0.6);
+  }
+
+  private Command armToPosition(double position) {
+    return new FunctionalCommand(
+      m_ArmSubsystem::resetStateToPresent,
+      ()-> m_ArmSubsystem.setGoal(position),
+      interrupted->{},
+      ()-> {return true;},
+      m_ArmSubsystem);
+  }
+
+  private Command ArmCommand(){
+    String scoreLocation = scoreLocationSub.get();
+    if(!m_intakeSubsystem.getNoteStatus()){
+      return armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS);
+    }
+
+    if(scoreLocation.equals("amp")){
+      return armToPosition(Constants.Arm.AMP_SCORE_RADIANS).andThen(sausage());
+    }
+
+    if(scoreLocation.equals("speaker")){
+      return armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS);
+    }
+
+    else return armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS);
   }
 
 

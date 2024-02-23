@@ -4,11 +4,11 @@
 
 package frc.robot.commands;
 
-import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringSubscriber;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants;
 import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 
@@ -18,7 +18,6 @@ public class ArmDefaultCommand extends Command {
   IntakeSubsystem m_IntakeSubsystem = new IntakeSubsystem();
 
   StringSubscriber scoreLocationSub;
-  //BooleanSubscriber amplifySub;
   NetworkTable table;
   NetworkTableInstance inst;
 
@@ -41,7 +40,7 @@ public class ArmDefaultCommand extends Command {
   public void execute() {
     String scoreLocation = scoreLocationSub.get();
     if(!m_IntakeSubsystem.getNoteStatus()){
-      m_ArmSubsystem.setGoal(1.0); //replace with intake position
+      m_ArmSubsystem.setGoal(Constants.Arm.INTAKE_POSITION_RADIANS); //replace with intake position
     }else {
       switch (scoreLocation){
         case "amp":

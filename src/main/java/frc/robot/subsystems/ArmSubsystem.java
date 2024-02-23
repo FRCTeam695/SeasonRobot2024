@@ -67,11 +67,16 @@ public class ArmSubsystem extends SubsystemBase {
   }
 
   private double getAbsolutePosition(){
-    return 2 * Math.PI * (Constants.Arm.ABSOLUTE_ENCODER_OFFSET - m_encoder.getAbsolutePosition()) / 2.67;
+    return 2 * Math.PI * (Constants.Arm.ABSOLUTE_ENCODER_OFFSET - m_encoder.getAbsolutePosition()) / 3;
   }
 
   public boolean atGoal(){
     return Math.abs(getAbsolutePosition() - goal) <= 0.05;
+  }
+
+  public void resetStateToPresent()
+  {
+    m_controller.reset(getAbsolutePosition());
   }
     
 
@@ -103,10 +108,11 @@ public class ArmSubsystem extends SubsystemBase {
   public void periodic(){
     SmartDashboard.putNumber("ARM ENCODER POSITION", getAbsolutePosition());
     SmartDashboard.putBoolean("AT GOAL", atGoal());
+    SmartDashboard.putNumber("ARM ENCODER RAW", m_encoder.getAbsolutePosition());
 
     if(goal == 0){
       goal = getAbsolutePosition();
     }
-    //reachGoal(goal);
+    reachGoal(goal);
   }
 }
