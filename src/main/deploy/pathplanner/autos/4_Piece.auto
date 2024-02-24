@@ -1,0 +1,118 @@
+{
+  "version": 1.0,
+  "startingPose": {
+    "position": {
+      "x": 0.76,
+      "y": 6.49
+    },
+    "rotation": -120.0
+  },
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot Position"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot Note"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Speaker_2_Note1"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "Shoot Position"
+                }
+              },
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Shoot 1"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot Note"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Intake 2"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "Shoot Position"
+                }
+              },
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Shoot 2"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot Note"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Intake 3"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "Shoot Position"
+                }
+              },
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Shoot 3"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "folder": null,
+  "choreoAuto": false
+}

@@ -7,17 +7,14 @@ package frc.robot.subsystems;
 import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StringSubscriber;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class LEDSubsystem extends SubsystemBase {
 
   private final AddressableLED m_LED;
   private final AddressableLEDBuffer m_LED_Buffer;
-  private final StringSubscriber scoreLocationSub;
   private final BooleanSubscriber amplifySub;
   private final NetworkTable table;
   private final NetworkTableInstance inst;
@@ -32,7 +29,6 @@ public class LEDSubsystem extends SubsystemBase {
     // NT
     inst = NetworkTableInstance.getDefault();
     table = inst.getTable("SideCar");
-    scoreLocationSub = table.getStringTopic("Score Location").subscribe("");
     amplifySub = table.getBooleanTopic("Amplify").subscribe(false);
 
     m_LED.setData(m_LED_Buffer);

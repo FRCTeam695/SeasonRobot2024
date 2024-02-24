@@ -32,6 +32,8 @@ public class ShooterSubsystem extends SubsystemBase {
   private final SparkPIDController shooterNeo1PID = shooterNeo1.getPIDController();
   private final SparkPIDController shooterNeo2PID = shooterNeo2.getPIDController();
 
+  private String scoringStatus;
+
   private double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput, maxRPM, setPointRPM;
 
   /** Creates a new ExampleSubsystem. */
@@ -66,6 +68,8 @@ public class ShooterSubsystem extends SubsystemBase {
     shooterNeo2PID.setFF(kFF);
     shooterNeo2PID.setOutputRange(kMinOutput, kMaxOutput);
 
+    scoringStatus = "speaker";
+
     // // display PID coefficients on SmartDashboard
     SmartDashboard.putNumber("P Gain", kP);
     SmartDashboard.putNumber("I Gain", kI);
@@ -75,6 +79,16 @@ public class ShooterSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Max Output", kMaxOutput);
     SmartDashboard.putNumber("Min Output", kMinOutput);
     SmartDashboard.putNumber("Set Rotations", 0);
+  }
+
+  public Command setScoringStatus(String newStatus){
+    return runOnce(
+    ()-> {scoringStatus = newStatus;}
+    );
+  }
+
+  public String getScoringStatus(){
+    return scoringStatus;
   }
 
   /**
@@ -178,7 +192,7 @@ public class ShooterSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Encoder 1 Velocity", shooterNeoEncoder1.getVelocity());
     SmartDashboard.putNumber("Encoder 2 Velocity", -shooterNeoEncoder2.getVelocity());
     SmartDashboard.putNumber("Position 1", shooterNeoEncoder1.getPosition());
-    //SmartDashboard.putNumber("Setpoint", shooterNeo1PID.get)
+    SmartDashboard.putString("Scoring Mode", scoringStatus);
     SmartDashboard.putBoolean("Up To Speed", shooterIsUpToSpeed());
   }
 

@@ -2,15 +2,21 @@
   "version": 1.0,
   "startingPose": {
     "position": {
-      "x": 0.67,
-      "y": 4.54
+      "x": 1.2788871226815193,
+      "y": 5.550936522700434
     },
-    "rotation": -60.0
+    "rotation": 180.0
   },
   "command": {
     "type": "sequential",
     "data": {
       "commands": [
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot Position"
+          }
+        },
         {
           "type": "named",
           "data": {

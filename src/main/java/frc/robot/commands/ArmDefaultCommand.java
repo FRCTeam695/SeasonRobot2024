@@ -14,17 +14,20 @@ import frc.robot.subsystems.IntakeSubsystem;
 
 public class ArmDefaultCommand extends Command {
   /** Creates a new armDefaultCommand. */
-  ArmSubsystem m_ArmSubsystem = new ArmSubsystem();
-  IntakeSubsystem m_IntakeSubsystem = new IntakeSubsystem();
+  ArmSubsystem m_ArmSubsystem;
+  IntakeSubsystem m_IntakeSubsystem;
 
   StringSubscriber scoreLocationSub;
   NetworkTable table;
   NetworkTableInstance inst;
 
-  public ArmDefaultCommand() {
+  public ArmDefaultCommand(ArmSubsystem armSubsystem, IntakeSubsystem intakeSubsystem) {
     // Use addRequirements() here to declare subsystem dependencies.
     inst = NetworkTableInstance.getDefault();
     table = inst.getTable("SideCar");
+
+    m_ArmSubsystem = armSubsystem;
+    m_IntakeSubsystem = intakeSubsystem;
     
     scoreLocationSub = table.getStringTopic("Score Location").subscribe("");
     //amplifySub = table.getBooleanTopic("Amplify").subscribe(false);
@@ -44,13 +47,13 @@ public class ArmDefaultCommand extends Command {
     }else {
       switch (scoreLocation){
         case "amp":
-          m_ArmSubsystem.setGoal(3.0);//replace with amp position
+          m_ArmSubsystem.setGoal(Constants.Arm.AMP_SCORE_RADIANS);//replace with amp position
           break;
         case "speaker":
-          m_ArmSubsystem.setGoal(0.5);//replace with stockpile position
+          m_ArmSubsystem.setGoal(Constants.Arm.STOCKPILE_POSITION_RADIANS);//replace with stockpile position
           break;
         case "intake":
-          m_ArmSubsystem.setGoal(1.0);//replace with intake position
+          m_ArmSubsystem.setGoal(Constants.Arm.INTAKE_POSITION_RADIANS);//replace with intake position
           break;
         default:
           break;
