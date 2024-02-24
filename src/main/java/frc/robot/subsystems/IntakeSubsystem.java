@@ -5,14 +5,10 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkPIDController;
 import com.revrobotics.CANSparkBase.IdleMode;
 
-import static edu.wpi.first.wpilibj2.command.Commands.race;
-import static edu.wpi.first.wpilibj2.command.Commands.waitUntil;
-
 import com.revrobotics.CANSparkFlex;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.motorcontrol.Spark;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
@@ -49,8 +45,8 @@ public class IntakeSubsystem extends SubsystemBase{
         //runIntakeAndIndexerPercent(0);
     }
 
-    public void setNoteStatus(boolean hasNote){
-        noteStatus = hasNote;
+    public Command setNoteStatus(boolean hasNote){
+        return runOnce(()-> noteStatus = hasNote);
     }
 
     public boolean getBeamBreak(){
@@ -61,17 +57,23 @@ public class IntakeSubsystem extends SubsystemBase{
         return noteStatus;
     }
 
-    public void runIntakeAndIndexerPercent(double percentVBus){
-        runIntakeToSpeed(percentVBus);
-        runIndexerToSpeed(percentVBus);
+    public Command runIntakeAndIndexerPercent(double percentVBus){
+        return run(
+            ()-> {
+                runIntakeToSpeed(percentVBus);
+                runIndexerToSpeed(percentVBus);
+            }
+        );
     }
 
     public void runIntakeToSpeed(double speed){
         intakeMotor.set(-speed);
     }
 
-    public void runIndexerToSpeed(double speed){
-        indexMotor.set(-speed);
+    public Command runIndexerToSpeed(double speed){
+        return run(
+            ()-> indexMotor.set(-speed)
+        );
     }
 
     public Command indexerClosedLoopControl(double rotations, double kp){

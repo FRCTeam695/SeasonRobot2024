@@ -29,7 +29,7 @@ public final class Constants {
             maxVelocityMetersPerSec [10],
             wheelbaseInches [11],
             trackwidthInches [12],
-            maxAngularAccelerationMetersPerSecond [13],
+            maxAngularAccelerationRadiansPerSecond [13],
             turningGearRatio [14], 
             isMK4i  (1 means it is MK4i, 0 means its not) [15]
         }
@@ -163,5 +163,10 @@ public final class Constants {
     public static class Shooter {
         public static final int SHOOTER_MOTOR_ID_1 = 50;
         public static final int SHOOTER_MOTOR_ID_2 = 53;
+    }
+
+    public static class Climber {
+        public static final int CLIMBER_MOTOR_ID_1 = 55;
+        public static final int CLIMBER_MOTOR_ID_2 = 56;
     }
 }

@@ -4,30 +4,24 @@
 
 package frc.robot;
 
-import frc.robot.commands.ArmDefaultCommand;
 import frc.robot.commands.SwerveDriveCommand;
 import frc.robot.subsystems.ArmSubsystem;
+import frc.robot.subsystems.ClimberSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.LEDSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StringSubscriber;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
-import edu.wpi.first.wpilibj2.command.PrintCommand;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SelectCommand;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
@@ -48,30 +42,34 @@ public class RobotContainer {
   private final SwerveSubsystem m_SwerveSubsystem = new SwerveSubsystem();
   private final IntakeSubsystem m_IntakeSubsystem = new IntakeSubsystem();
   private final ShooterSubsystem m_ShooterSubsystem = new ShooterSubsystem();
+  private final ClimberSubsystem m_ClimberSubsystem = new ClimberSubsystem();
   private final LEDSubsystem m_LedSubsystem = new LEDSubsystem();
 
   private final ArmSubsystem m_ArmSubsystem = new ArmSubsystem();
 
   private final XboxController controller = new XboxController(0);
+  private final XboxController climberController = new XboxController(1);
   private final JoystickButton back_Button = new JoystickButton(controller, 7);
   private final JoystickButton a_Button = new JoystickButton(controller, 1);
-  private final JoystickButton b_Button = new JoystickButton(controller, 2);
-    private final JoystickButton x_Button = new JoystickButton(controller, 3);
+  //private final JoystickButton b_Button = new JoystickButton(controller, 2);
+  private final JoystickButton x_Button = new JoystickButton(controller, 3);
 
   private final JoystickButton y_Button = new JoystickButton(controller, 4);
   private final JoystickButton left_Bumper = new JoystickButton(controller, 5);
   private final JoystickButton right_Bumper = new JoystickButton(controller, 6);
 
   //Network Table Stuff
-  private NetworkTableInstance inst = NetworkTableInstance.getDefault();
-  private NetworkTable table = inst.getTable("SideCar");
-  private StringSubscriber scoreLocationSub = NetworkTableInstance.getDefault().getStringTopic("Score Location").subscribe("");
+  // private NetworkTableInstance inst = NetworkTableInstance.getDefault();
+  // private NetworkTable table = inst.getTable("SideCar");
+  // private StringSubscriber scoreLocationSub = NetworkTableInstance.getDefault().getStringTopic("Score Location").subscribe("");
 
   // Double suppliers
   private final DoubleSupplier left_xAxis = () -> (controller.getRawAxis(0));
   private final DoubleSupplier left_yAxis = () -> (controller.getRawAxis(1));
   private final DoubleSupplier right_xAxis = () -> (controller.getRawAxis(4));
   private final DoubleSupplier right_Trigger = () -> (controller.getRawAxis(3));
+  private final DoubleSupplier climberController_y1 = () -> MathUtil.applyDeadband(climberController.getRawAxis(1), 0.15);
+  private final DoubleSupplier climberController_y2 = ()-> MathUtil.applyDeadband(climberController.getRawAxis(5), 0.15);
 
 
   // Triggers
@@ -114,7 +112,7 @@ public class RobotContainer {
      * stops after two seconds.
      */
     shoot_Trigger.onTrue(
-      scoreNoteCommand()
+      shootNoteCommand().andThen(armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS))
     );
 
 
@@ -124,14 +122,29 @@ public class RobotContainer {
      * 
      * Spits out a note using the intake and indexer
      */
-    //right_Bumper.whileTrue(run(()-> m_intakeSubsystem.runIntakeAndIndexerPercent(-0.1), m_intakeSubsystem));
+    right_Bumper.whileTrue(m_IntakeSubsystem.runIntakeAndIndexerPercent(-0.1));
 
+
+    /*
+     * A BUTTON BINDING:
+     * 
+     * Sausages note then moves the arm to AMP scoring position,
+     * then tells the shooter that next time we shoot, to run the shooters at AMP speed.
+     */
     a_Button.onTrue(sausageNote()
                     .andThen(armToPosition(Constants.Arm.AMP_SCORE_RADIANS))
                     .andThen(m_ShooterSubsystem.setScoringStatus("amp")));
 
-    right_Bumper.onTrue(armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS));
-    x_Button.onTrue(armToPosition(Constants.Arm.STOCKPILE_POSITION_RADIANS));
+    //right_Bumper.onTrue(armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS));
+
+    /*
+     * X BUTTON BINDING:
+     * 
+     * Moves the arm to stockpile position,
+     * then tells the shooter that next time we shoot, to run the shooters at max speed for stockpile.
+     */
+    x_Button.onTrue(armToPosition(Constants.Arm.STOCKPILE_POSITION_RADIANS)
+                    .andThen(m_ShooterSubsystem.setScoringStatus("stockpile")));
 
     /*
      * BACK BUTTON BINDING:
@@ -161,13 +174,21 @@ public class RobotContainer {
      * Default command for the intake, this ensures that
      * while the intake is not in use it is not running
      */
-    m_IntakeSubsystem.setDefaultCommand(new RunCommand(() -> {m_IntakeSubsystem.runIntakeAndIndexerPercent(0.0);}, m_IntakeSubsystem));
+    m_IntakeSubsystem.setDefaultCommand(m_IntakeSubsystem.runIntakeAndIndexerPercent(0.0));
 
     /*
-     * Default command for arm, this checks if we have a note or not,
-     * and then moves the arm to a position as specified in sidecar
+     * Default command for the climber, 
+     * it reads the y-axis from each controller and sets each climber to speed
      */
-    //m_ArmSubsystem.setDefaultCommand(new ArmDefaultCommand(m_ArmSubsystem, m_IntakeSubsystem));  
+    m_ClimberSubsystem.setDefaultCommand(climberDefaultComand());
+  }
+
+  /*
+   * continuously runs each climber to a set speed
+   */
+  private Command climberDefaultComand(){
+    return
+      m_ClimberSubsystem.runClimberMotors(climberController_y1, climberController_y2);
   }
 
   /*
@@ -178,28 +199,42 @@ public class RobotContainer {
    */
   private Command intake() {
     return 
+
+    // makes sure arm is in the correct position
     armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS)
     .andThen(
+    
+    // (runs the shooter to 0 velocity and run intake and indexer) until we get a beambreak
     race(
       race(
-        runOnce(()-> m_LedSubsystem.setColorToGreen())
+        // LED is for driver preference, so he knows when the robot is still intaking
+        m_LedSubsystem.setColorToGreen()
           .andThen(
-            run(()-> m_IntakeSubsystem.runIntakeAndIndexerPercent(0.5), m_IntakeSubsystem))
-        , waitUntil(()-> m_IntakeSubsystem.getBeamBreak())
+            m_IntakeSubsystem.runIntakeAndIndexerPercent(0.5))
+          , waitUntil(()-> m_IntakeSubsystem.getBeamBreak())
       ),
       m_ShooterSubsystem.runVelocity(()-> 0))
       )
-      .andThen(runOnce(()-> m_LedSubsystem.setColorToOrange()))
-      .andThen(
-          race(
-            //run(()-> m_IntakeSubsystem.runIndexerToSpeed(-0.05)),
-            m_IntakeSubsystem.indexerClosedLoopControl(0.2, 0.25),
-            waitUntil(()-> !m_IntakeSubsystem.getBeamBreak())
-          )
+
+    // LED to orange means driver can drive away, won't effect the intake, we have the note
+    .andThen(m_LedSubsystem.setColorToOrange())
+
+    // runs the indexer backwards using closed loop control,
+    // we do this because the shooter wheels need room to spin up to speed
+    .andThen(
+        race(
+          m_IntakeSubsystem.indexerClosedLoopControl(0.2, 0.25),
+          waitUntil(()-> !m_IntakeSubsystem.getBeamBreak())
+        )
       )
-      .andThen(runOnce(()-> m_IntakeSubsystem.setNoteStatus(true), m_IntakeSubsystem))
+      .andThen(m_IntakeSubsystem.setNoteStatus(true))
+
+      // moves the arm to shoot position, 
+      // we default to shoot position until told otherwise by driver
       .andThen(armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS))
       .andThen(m_ShooterSubsystem.setScoringStatus("speaker"))
+
+      // the withName is for names commands
       .withName("Intake Note")
       ;
   }
@@ -213,14 +248,14 @@ public class RobotContainer {
    * velocity time graph for the shootermotor for a dip (indicating we shot the note)
    * or with just a two second timeout (just in case it somehow shoots without having a note)
    */
-  private Command shoot() {
+  private Command shoot(int percentRPM) {
     return race(
-      m_ShooterSubsystem.runVelocity(()-> (2222/5700.0)),//2221.0 for speaker; 550 for amp
+      m_ShooterSubsystem.runVelocity(()-> (percentRPM/5700.0)),
       waitUntil(m_ShooterSubsystem::isRunning)
         .andThen(waitUntil(m_ShooterSubsystem::shooterIsUpToSpeed))
         .andThen(
             race(
-              run(()-> m_IntakeSubsystem.runIndexerToSpeed(1), m_IntakeSubsystem),
+              m_IntakeSubsystem.runIndexerToSpeed(1),
               waitUntil(m_ShooterSubsystem::shooterIsNotUpToSpeed)
                 .andThen(
                   waitUntil(m_ShooterSubsystem::shooterIsUpToSpeed)
@@ -229,24 +264,28 @@ public class RobotContainer {
         )
             
     )
-    .andThen(runOnce(()-> m_IntakeSubsystem.setNoteStatus(false)))
-    .andThen(runOnce(()-> m_LedSubsystem.turnColorOff()))
+    .andThen(m_IntakeSubsystem.setNoteStatus(false))
+    .andThen(m_LedSubsystem.turnColorOff())
     //.andThen(m_ShooterSubsystem.runVelocity(()-> (550.0 / 5700.0)).withTimeout(2)) //amp shooting follow through
     ;
   }
 
   private Command autonShoot(){
-    return shoot().andThen(runOnce(()-> m_LedSubsystem.turnColorOff())).withName("Shoot Note");
+    return shoot(2222).andThen(m_LedSubsystem.turnColorOff()).withName("Shoot Note");
   }
 
   /*
    * Sausages the note in the shooter wheels, gets us ready for amp scoring
    */
   private Command sausageNote(){
-        return m_IntakeSubsystem.indexerClosedLoopControl(0.75, 2)
-                .andThen(m_ShooterSubsystem.closedLoopRotation(0.75, 1));
-  }
+        return 
+            // Uses closed loop control in indexer to move the note into the shooter wheel
+            m_IntakeSubsystem.indexerClosedLoopControl(0.75, 2)
 
+            // Moves the note into place by using closed loop control
+            .andThen(m_ShooterSubsystem.closedLoopRotation(0.75, 1));
+  }
+  
   /*
    * Gives a quick closed loop rotation to give the note a quick push into the amp
    */
@@ -261,29 +300,63 @@ public class RobotContainer {
    */
   private Command armToPosition(double position) {
     return new FunctionalCommand(
+      // We have to reset state to present or else the PID controller 
+      // doesn't always have an accurate reading of where it is
+
+      // ** INIT **
       m_ArmSubsystem::resetStateToPresent,
+
+      // ** EXECUTE **
       ()-> m_ArmSubsystem.setGoal(position),
+
+      // ** ON INTERRUPTED **
       interrupted->{},
+
+      // ** END CONDITION **
       m_ArmSubsystem::atGoal,
+
+      // ** REQUIREMENTS **
       m_ArmSubsystem)
+
+      // withName is just for named commands
       .withName("Shoot Position");
   }
 
   /*
-   * Scores the note, the same button is binded to amp and speaker this way
+   * Shoot the note, the same button is binded to amp and speaker this way
    */
-  private Command scoreNoteCommand(){
-    return new ConditionalCommand(
+  private Command shootNoteCommand(){
+    return new SelectCommand<>(
 
-    armToPosition(Constants.Arm.AMP_SCORE_RADIANS)
-    .andThen(flickToAmp())
-    .andThen(armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS)), 
+    Map.ofEntries(
 
-    armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS)
-    .andThen(shoot()).withTimeout(2)
-    .andThen(armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS)), 
+      Map.entry("amp", 
 
-    ()-> m_ShooterSubsystem.getScoringStatus().equals("amp"));
+        // Moves arm to position
+        armToPosition(Constants.Arm.AMP_SCORE_RADIANS)
+
+        // Flicks the note into the amp
+        .andThen(flickToAmp())),
+
+      Map.entry("speaker", 
+
+        // Moves the arm into position for shooting
+        armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS)
+
+        // Shoots the note into speaker
+        .andThen(shoot(2222)).withTimeout(2)),
+
+      Map.entry("stockpile", 
+
+        // Moves arm into position for stockpiling
+        armToPosition(Constants.Arm.STOCKPILE_POSITION_RADIANS)
+
+        // Shoots the note at full speed
+        .andThen(shoot(5700)).withTimeout(2))),
+
+
+    // condition
+    ()-> m_ShooterSubsystem.getScoringStatus());
   }
 
 
@@ -293,12 +366,6 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-
     return autoChooser.getSelected();
-    //return testAuton();
-  }
-
-  public Command testAuton(){
-    return armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS).andThen(autonShoot());
   }
 }

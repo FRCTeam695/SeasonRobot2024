@@ -9,6 +9,7 @@ import java.util.function.DoubleSupplier;
 import com.revrobotics.CANSparkFlex;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkPIDController;
+import com.revrobotics.CANSparkBase.IdleMode;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 import com.revrobotics.CANSparkMax;
 
@@ -40,6 +41,10 @@ public class ShooterSubsystem extends SubsystemBase {
   public ShooterSubsystem() {
     shooterNeoEncoder1.setPosition(0);
     shooterNeoEncoder2.setPosition(0);
+
+    shooterNeo1.setIdleMode(IdleMode.kBrake);
+    shooterNeo2.setIdleMode(IdleMode.kBrake);
+
     shooterNeo1.enableVoltageCompensation(12);
     shooterNeo2.enableVoltageCompensation(12);
     // PID coefficients
@@ -81,12 +86,14 @@ public class ShooterSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Set Rotations", 0);
   }
 
+  // Used in order to know what speed to shoot at, i.e. amp vs speaker
   public Command setScoringStatus(String newStatus){
     return runOnce(
     ()-> {scoringStatus = newStatus;}
     );
   }
 
+  // Returns the scoring status
   public String getScoringStatus(){
     return scoringStatus;
   }
@@ -105,9 +112,10 @@ public class ShooterSubsystem extends SubsystemBase {
 
   }
 
+  // returns true id the shooter is up to speed
   public boolean shooterIsUpToSpeed(){
 
-    int deadband = 75;
+    int deadband = 75; //unit is RPM
     if(Math.abs(setPointRPM-Math.abs(shooterNeoEncoder2.getVelocity())) <= deadband 
     && Math.abs(setPointRPM-Math.abs(shooterNeoEncoder1.getVelocity())) <= deadband)
     {
@@ -116,6 +124,7 @@ public class ShooterSubsystem extends SubsystemBase {
     return false;
   }
 
+  // returns true if the shooter is not up to speed
   public boolean shooterIsNotUpToSpeed(){
     int deadband = 75;
     if(Math.abs(setPointRPM-Math.abs(shooterNeoEncoder2.getVelocity())) <= deadband 
@@ -126,31 +135,42 @@ public class ShooterSubsystem extends SubsystemBase {
     return true;
   }
 
+  // checks if the shooter is running or not
   public boolean isRunning(){
     return setPointRPM > 5;
   }
 
+  // rotates a specific amount of rotations using closed loop control
   public Command closedLoopRotation(double rotations, double kp_rot){
 
     return new FunctionalCommand(
       ()-> {
+
+        // makes sure to set the kp, kp for shooting vs closed loop rotation is very different
         shooterNeo1PID.setP(kp_rot);
         shooterNeo2PID.setP(kp_rot);
         
+        // this is just for good measure
         shooterNeo1PID.setOutputRange(-1, 1);
         shooterNeo2PID.setOutputRange(-1, 1);
 
+        //resets the encoders
         shooterNeoEncoder1.setPosition(0);
         shooterNeoEncoder2.setPosition(0);
       },
 
       ()-> {
+        // tells the neo's where to go
         shooterNeo1PID.setReference(rotations, CANSparkMax.ControlType.kPosition);
         shooterNeo2PID.setReference(-rotations, CANSparkMax.ControlType.kPosition);
       },
 
       interrupted-> {},
+
+      // end condition
       ()-> (shooterNeoEncoder1.getPosition() >= rotations)
+
+      // ALWAYS REQUIRE THE SUBSYSTEM!!
     , this);
   }
 

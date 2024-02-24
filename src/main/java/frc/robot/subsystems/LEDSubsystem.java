@@ -4,20 +4,21 @@
 
 package frc.robot.subsystems;
 
-import edu.wpi.first.networktables.BooleanSubscriber;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
+// import edu.wpi.first.networktables.BooleanSubscriber;
+// import edu.wpi.first.networktables.NetworkTable;
+// import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class LEDSubsystem extends SubsystemBase {
 
   private final AddressableLED m_LED;
   private final AddressableLEDBuffer m_LED_Buffer;
-  private final BooleanSubscriber amplifySub;
-  private final NetworkTable table;
-  private final NetworkTableInstance inst;
+  // private final BooleanSubscriber amplifySub;
+  // private final NetworkTable table;
+  // private final NetworkTableInstance inst;
   private String color;
 
   public LEDSubsystem() {
@@ -27,41 +28,40 @@ public class LEDSubsystem extends SubsystemBase {
     m_LED.setLength(m_LED_Buffer.getLength());
     color = "";
     // NT
-    inst = NetworkTableInstance.getDefault();
-    table = inst.getTable("SideCar");
-    amplifySub = table.getBooleanTopic("Amplify").subscribe(false);
+    // inst = NetworkTableInstance.getDefault();
+    // table = inst.getTable("SideCar");
+    // amplifySub = table.getBooleanTopic("Amplify").subscribe(false);
 
     m_LED.setData(m_LED_Buffer);
     m_LED.start();
     //color = "green";
   }
 
-  public void setColorToWhite() {
-    color = "white";
+  public Command setColorToWhite() {
+    return runOnce(()-> color = "white");
   }
 
-  public void setColorToOrange() {
-    color = "orange";
+  public Command setColorToOrange() {
+    return runOnce(()-> color = "orange");
   }
 
-  public void setColorToGreen() {
-    color = "green";
+  public Command setColorToGreen() {
+    return runOnce(()-> color = "green");
   }
 
-  public void turnColorOff() {
-    color = "off";
+  public Command turnColorOff() {
+    return runOnce(()-> color = "off");
   }
 
-  // RED IF ERROR
   public void updateColor() {
-    // OVERRIDE COLOR IF AMPLIFY COMMAND
-    if (amplifySub.get()) {
-      for (int i = 0; i < m_LED_Buffer.getLength(); ++i) {
-        m_LED_Buffer.setRGB(i, 255, 255, 255);
-      }
-      m_LED.setData(m_LED_Buffer);
-      return;
-    }
+    // // OVERRIDE COLOR IF AMPLIFY COMMAND
+    // if (amplifySub.get()) {
+    //   for (int i = 0; i < m_LED_Buffer.getLength(); ++i) {
+    //     m_LED_Buffer.setRGB(i, 255, 255, 255);
+    //   }
+    //   m_LED.setData(m_LED_Buffer);
+    //   return;
+    // }
     switch (color) {
       case "off":
         for (int i = 0; i < m_LED_Buffer.getLength(); ++i) {
