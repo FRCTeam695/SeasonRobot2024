@@ -128,13 +128,13 @@ public final class Constants {
 
     public static class Intake {
         public static final int INTAKE_MOTOR_ID = 51;
-
         public static final int INDEX_MOTOR_ID = 52;
+        public static final int BEAMBREAK_ID = 0;
     }
 
     public static class Arm {
         public static final int PITCH_MOTOR_ID = 54;
-        public static final int ARM_ENCODER_PORT = 1;
+        public static final int ARM_ENCODER_PORT = 9;
 
         public static final double MAX_VELOCITY = 3;
         public static final double MAX_ACCELERATION = 10;

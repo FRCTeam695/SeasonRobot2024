@@ -40,7 +40,7 @@ public class IntakeSubsystem extends SubsystemBase{
 
         indexMotor.setIdleMode(IdleMode.kBrake);
 
-        beamBreak = new DigitalInput(2);
+        beamBreak = new DigitalInput(Constants.Intake.BEAMBREAK_ID);
         noteStatus = false;
         //runIntakeAndIndexerPercent(0);
     }
@@ -61,7 +61,7 @@ public class IntakeSubsystem extends SubsystemBase{
         return run(
             ()-> {
                 runIntakeToSpeed(percentVBus);
-                runIndexerToSpeed(percentVBus);
+                indexMotor.set(-percentVBus);
             }
         );
     }

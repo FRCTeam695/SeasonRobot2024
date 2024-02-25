@@ -59,7 +59,7 @@ public class SwerveSubsystem extends SubsystemBase {
         bottomRight = new SwerveModule(Constants.Swerve.BACK_RIGHT_DRIVE_ID, Constants.Swerve.BACK_RIGHT_TURN_ID, Constants.Swerve.BACK_RIGHT_ABS_ENCODER_OFFSET, Constants.Swerve.BACK_RIGHT_CANCODER_ID);
 
         SwerveDriveKinematics driveKinematics = Constants.Swerve.kDriveKinematics;
-        odometry = new SwerveDrivePoseEstimator(driveKinematics, new Rotation2d(),
+        odometry = new SwerveDrivePoseEstimator(driveKinematics, new Rotation2d(getHeading()),
                 new SwerveModulePosition[] { frontRight.getPosition(), frontLeft.getPosition(),
                         bottomLeft.getPosition(), bottomRight.getPosition() }, new Pose2d());
 
@@ -93,15 +93,23 @@ public class SwerveSubsystem extends SubsystemBase {
         new Thread(() -> {
             try {
                 Thread.sleep(1000);
-                zeroHeading();
+                resetSwerve();
             } catch (Exception e) {
             }
         }).start();
     }
 
-    //Sets the gyro heading to 0
-    public void zeroHeading() {
-        gyro.reset();
+    // Sets the gyro heading to 0
+    // Sets the relative encoders with the absolute encoders
+    public Command resetSwerve() {
+        return runOnce(
+            ()-> 
+                {
+                    gyro.reset();
+                    gyro.setAngleAdjustment(0);
+                    setRelativeTurnEncoderValue();
+                }
+        );
     }
 
     //getPitch is used for balancing the robot on the charge station
@@ -174,12 +182,6 @@ public class SwerveSubsystem extends SubsystemBase {
 
     //Gets the position of the wheel as returned by the absolute encoder (check SwerveModule.java for further details)
     public double getAbsoluteEncoderValue(int motor) {
-        /*
-        SmartDashboard.putNumber("FRONT LEFT MOTOR POSITION ABS", frontLeft.getAbsoluteEncoderRadians() * 180/Math.PI);
-        SmartDashboard.putNumber("FRONT RIGHT MOTOR POSITION ABS", frontRight.getAbsoluteEncoderRadians() * 180/Math.PI);
-        SmartDashboard.putNumber("BACK LEFT MOTOR POSITION ABS", bottomLeft.getAbsoluteEncoderRadians() * 180/Math.PI);
-        SmartDashboard.putNumber("BACK RIGHT MOTOR POSITION ABS", bottomRight.getAbsoluteEncoderRadians() * 180/Math.PI);
-        */
 
         switch (motor) {
             case 1:
@@ -254,16 +256,42 @@ public class SwerveSubsystem extends SubsystemBase {
     //periodic updates the odometry object
     @Override
     public void periodic() {
+        // SmartDashboard.putNumber("FRONT LEFT MOTOR POSITION ABS", frontLeft.getAbsoluteEncoderRadians() * 180/Math.PI);
+        // SmartDashboard.putNumber("FRONT RIGHT MOTOR POSITION ABS", frontRight.getAbsoluteEncoderRadians() * 180/Math.PI);
+        // SmartDashboard.putNumber("BACK LEFT MOTOR POSITION ABS", bottomLeft.getAbsoluteEncoderRadians() * 180/Math.PI);
+        // SmartDashboard.putNumber("BACK RIGHT MOTOR POSITION ABS", bottomRight.getAbsoluteEncoderRadians() * 180/Math.PI);
+
+        // SmartDashboard.putNumber("FRONT LEFT MOTOR CANCODER", frontLeft.getRawCancoder());
+        // SmartDashboard.putNumber("FRONT RIGHT MOTOR CANCODER", frontRight.getRawCancoder());
+        // SmartDashboard.putNumber("BACK LEFT MOTOR CANCODER", bottomLeft.getRawCancoder());
+        // SmartDashboard.putNumber("BACK RIGHT MOTOR CANCODER", bottomRight.getRawCancoder());
+
+        // SmartDashboard.putNumber("FRONT LEFT MOTOR POSITION", frontLeft.getTurnPosition(true));
+        // SmartDashboard.putNumber("FRONT RIGHT MOTOR POSITION", frontRight.getTurnPosition(true));
+        // SmartDashboard.putNumber("BACK LEFT MOTOR POSITION", bottomLeft.getTurnPosition(true));
+        // SmartDashboard.putNumber("BACK RIGHT MOTOR POSITION", bottomRight.getTurnPosition(true));
+
+        // SmartDashboard.putString("SWERVE M STATE FR", desiredStates[0].toString());
+        // SmartDashboard.putString("SWERVE M STATE FL", desiredStates[1].toString());
+        // SmartDashboard.putString("SWERVE M STATE BL", desiredStates[2].toString());
+        // SmartDashboard.putString("SWERVE M STATE BR", desiredStates[3].toString());
 
 
         if(LimelightHelpers.getLatestResults("").targetingResults.targets_Fiducials.length >= 2){
             //gets the total latency from the limelight
-            //double latency = LimelightHelpers.getLatency_Capture("") + LimelightHelpers.getLatency_Pipeline("");
-            odometry.addVisionMeasurement(LimelightHelpers.getBotPose2d_wpiBlue(""), Timer.getFPGATimestamp());
+            double latency = LimelightHelpers.getLatency_Capture("") + LimelightHelpers.getLatency_Pipeline("");
+            double tx = LimelightHelpers.getTX("");
+            SmartDashboard.putNumber("Latency", latency);
+
+            // If the result was not grabbed from the peripherals of the limelight FOV
+            if(   !(   (tx > 27) || (tx < -27)   )    ){
+                odometry.addVisionMeasurement(LimelightHelpers.getBotPose2d_wpiBlue(""), Timer.getFPGATimestamp());
+            }
+
 
         }
 
-        odometry.updateWithTime(Timer.getFPGATimestamp(), new Rotation2d(getHeading() * Math.PI / 180),
+        odometry.update( new Rotation2d(getHeading() * Math.PI / 180),
                 new SwerveModulePosition[] { frontRight.getPosition(), frontLeft.getPosition(),
                         bottomLeft.getPosition(), bottomRight.getPosition() });
         m_field.setRobotPose(getPose());
@@ -271,8 +299,9 @@ public class SwerveSubsystem extends SubsystemBase {
         SmartDashboard.putString("Robot Pose", odometry.getEstimatedPosition().toString());
     }
 
-    //Allows us to manually reset the odometer, used with vision pose estimation
+    //Allows us to manually reset the odometery, used with vision pose estimation
     public void resetOdometry(Pose2d pose) {
+        gyro.setAngleAdjustment(pose.getRotation().getDegrees());
         odometry.resetPosition(
                 gyro.getRotation2d(),
                 new SwerveModulePosition[] {

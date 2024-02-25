@@ -45,8 +45,8 @@ public class ShooterSubsystem extends SubsystemBase {
     shooterNeo1.setIdleMode(IdleMode.kBrake);
     shooterNeo2.setIdleMode(IdleMode.kBrake);
 
-    shooterNeo1.enableVoltageCompensation(12);
-    shooterNeo2.enableVoltageCompensation(12);
+    shooterNeo1.enableVoltageCompensation(11.5);
+    shooterNeo2.enableVoltageCompensation(11.5);
     // PID coefficients
     kP = 0.000150;// * 2; **times two for amp
     kI = 0;
@@ -112,10 +112,18 @@ public class ShooterSubsystem extends SubsystemBase {
 
   }
 
+  public boolean currentAboveTwentyAmps(){
+    return (shooterNeo1.getOutputCurrent() > 20);// || (shooterNeo2.getOutputCurrent() > 20);
+  }
+
+  public boolean currentBelowTwentyAmps(){
+    return !currentAboveTwentyAmps();
+  }
+
   // returns true id the shooter is up to speed
   public boolean shooterIsUpToSpeed(){
 
-    int deadband = 75; //unit is RPM
+    double deadband = setPointRPM * (75/2222.0); //unit is RPM
     if(Math.abs(setPointRPM-Math.abs(shooterNeoEncoder2.getVelocity())) <= deadband 
     && Math.abs(setPointRPM-Math.abs(shooterNeoEncoder1.getVelocity())) <= deadband)
     {
@@ -126,18 +134,44 @@ public class ShooterSubsystem extends SubsystemBase {
 
   // returns true if the shooter is not up to speed
   public boolean shooterIsNotUpToSpeed(){
-    int deadband = 75;
-    if(Math.abs(setPointRPM-Math.abs(shooterNeoEncoder2.getVelocity())) <= deadband 
-    && Math.abs(setPointRPM-Math.abs(shooterNeoEncoder1.getVelocity())) <= deadband)
-    {
-      return false;
-    }
-    return true;
+    return !shooterIsUpToSpeed();
   }
 
   // checks if the shooter is running or not
   public boolean isRunning(){
     return setPointRPM > 5;
+  }
+
+  public Command shooterDefaultCommand(double kp_rot){
+    return new FunctionalCommand(
+      ()-> {
+
+        // makes sure to set the kp, kp for shooting vs closed loop rotation is very different
+        shooterNeo1PID.setP(1);
+        shooterNeo2PID.setP(1);
+        
+        // this is just for good measure
+        shooterNeo1PID.setOutputRange(-1, 1);
+        shooterNeo2PID.setOutputRange(-1, 1);
+
+        //resets the encoders
+        shooterNeoEncoder1.setPosition(0);
+        shooterNeoEncoder2.setPosition(0);
+      },
+
+      ()-> {
+        // tells the neo's where to go
+        shooterNeo1PID.setReference(0, CANSparkMax.ControlType.kPosition);
+        shooterNeo2PID.setReference(0, CANSparkMax.ControlType.kPosition);
+      },
+
+      interrupted-> {},
+
+      // end condition
+      ()-> (false)
+
+      // ALWAYS REQUIRE THE SUBSYSTEM!!
+    , this);
   }
 
   // rotates a specific amount of rotations using closed loop control
@@ -214,6 +248,8 @@ public class ShooterSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Position 1", shooterNeoEncoder1.getPosition());
     SmartDashboard.putString("Scoring Mode", scoringStatus);
     SmartDashboard.putBoolean("Up To Speed", shooterIsUpToSpeed());
+    SmartDashboard.putNumber("Motor Current 1", shooterNeo1.getOutputCurrent());
+    SmartDashboard.putNumber("Motor Current 2", shooterNeo2.getOutputCurrent());
   }
 
   @Override

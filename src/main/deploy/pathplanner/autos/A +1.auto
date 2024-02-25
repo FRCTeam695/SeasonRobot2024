@@ -3,7 +3,7 @@
   "startingPose": {
     "position": {
       "x": 0.73,
-      "y": 6.56
+      "y": 6.562
     },
     "rotation": -120.0
   },
@@ -12,9 +12,15 @@
     "data": {
       "commands": [
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "Shoot Position"
+            "pathName": "A-1"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "1-A"
           }
         },
         {
@@ -27,30 +33,6 @@
           "type": "path",
           "data": {
             "pathName": "A-m4"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Stockpile Position"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Shoot Note"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "m4-m5"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "m5-m6"
           }
         }
       ]

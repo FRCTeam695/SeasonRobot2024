@@ -16,21 +16,95 @@
     },
     {
       "anchor": {
-        "x": 8.28,
-        "y": 4.52
+        "x": 7.555895511220408,
+        "y": 6.113056676897948
       },
       "prevControl": {
-        "x": 8.20973498072531,
-        "y": 4.953300952193915
+        "x": 7.556327469702014,
+        "y": 6.39581768642496
+      },
+      "nextControl": {
+        "x": 7.555463552738802,
+        "y": 5.830295667370936
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 8.235124030875737,
+        "y": 4.286166175756032
+      },
+      "prevControl": {
+        "x": 8.164859011601047,
+        "y": 4.719467127949947
       },
       "nextControl": null,
       "isLocked": false,
       "linkedName": null
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 1.05,
+      "rotationDegrees": 170.0,
+      "rotateFast": false
+    }
+  ],
   "constraintZones": [],
-  "eventMarkers": [],
+  "eventMarkers": [
+    {
+      "name": "Shooter to Position",
+      "waypointRelativePos": 0,
+      "command": {
+        "type": "parallel",
+        "data": {
+          "commands": [
+            {
+              "type": "named",
+              "data": {
+                "name": "Stockpile Position"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Shoot Note",
+      "waypointRelativePos": 1.05,
+      "command": {
+        "type": "sequential",
+        "data": {
+          "commands": [
+            {
+              "type": "named",
+              "data": {
+                "name": "Shoot Note"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Begin Intake",
+      "waypointRelativePos": 1.45,
+      "command": {
+        "type": "parallel",
+        "data": {
+          "commands": [
+            {
+              "type": "named",
+              "data": {
+                "name": "Intake Note"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
   "globalConstraints": {
     "maxVelocity": 4.49,
     "maxAcceleration": 2.0,
@@ -39,7 +113,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 90.0,
+    "rotation": 120.0,
     "rotateFast": false
   },
   "reversed": false,

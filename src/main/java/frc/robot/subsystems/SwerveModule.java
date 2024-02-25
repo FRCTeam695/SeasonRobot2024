@@ -5,6 +5,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -118,6 +119,10 @@ public class SwerveModule{
         double wheelRPS = falconToRPS(driveMotor.getSelectedSensorVelocity(), drivingGearRatio);
         double wheelMPS = (wheelRPS * wheelCircumference);
         return wheelMPS;
+    }
+
+    public double getRawCancoder(){
+        return absoluteEncoder.getAbsolutePosition();
     }
 
     //Gets the absolute encoder value in radians

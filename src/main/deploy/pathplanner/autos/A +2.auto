@@ -26,31 +26,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "A-m4"
+            "pathName": "A-1"
           }
         },
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "Stockpile Position"
+            "pathName": "1-A"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "Shoot Note"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "m4-m5"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "m5-m6"
           }
         }
       ]

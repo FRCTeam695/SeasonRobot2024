@@ -18,10 +18,12 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 import edu.wpi.first.wpilibj2.command.SelectCommand;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
@@ -57,6 +59,7 @@ public class RobotContainer {
   private final JoystickButton y_Button = new JoystickButton(controller, 4);
   private final JoystickButton left_Bumper = new JoystickButton(controller, 5);
   private final JoystickButton right_Bumper = new JoystickButton(controller, 6);
+  private final JoystickButton amplify_Button = new JoystickButton(climberController, 1);
 
   //Network Table Stuff
   // private NetworkTableInstance inst = NetworkTableInstance.getDefault();
@@ -88,10 +91,10 @@ public class RobotContainer {
     configureBindings();
     defaultCommands();
 
-    SmartDashboard.putData("Auto Chooser", autoChooser);
+    //SmartDashboard.putData("Auto Chooser", autoChooser);
     SmartDashboard.putData("Intake Subsystem", m_IntakeSubsystem);
     SmartDashboard.putData("Shooter Subsystem", m_ShooterSubsystem);
-    //SmartDashboard.putNumber("theta", 0.99);
+    
   }
 
   private void configureBindings() {
@@ -112,8 +115,8 @@ public class RobotContainer {
      * stops after two seconds.
      */
     shoot_Trigger.onTrue(
-      shootNoteCommand().andThen(armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS))
-    );
+      shootNoteCommand()
+      .andThen(armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS)));
 
 
 
@@ -152,7 +155,15 @@ public class RobotContainer {
      * Resets the gyro, this is used mostly in testing and 
      * shouldn't really be needed in a match unless something unexpected happens
      */
-    back_Button.onTrue(runOnce(()-> m_SwerveSubsystem.zeroHeading()));
+    back_Button.onTrue(m_SwerveSubsystem.resetSwerve());
+    
+    /*
+     * AMPLIFY BUTTON BINDING:
+     * 
+     * Gives an LED signal to amplify the speaker
+     * If we have already given the signal, if pressed again will turn the signal off
+     */
+    amplify_Button.onTrue(amplifyButtonCommand());
 
     // This is just for testing purposes
     y_Button.onTrue(runOnce(()-> m_SwerveSubsystem.resetOdometry(new Pose2d(0, 0, new Rotation2d(0)))));
@@ -167,8 +178,12 @@ public class RobotContainer {
     /*
      * Default command for shooter, this ensures that 
      * while the shooter is not in use it is not running
+     * 
+     * We use closed loop control instead of run velocity because it while fight better,
+     * keeps the note in place nicely
      */
-    m_ShooterSubsystem.setDefaultCommand(m_ShooterSubsystem.runVelocity(()-> 0));
+    m_ShooterSubsystem.setDefaultCommand(m_ShooterSubsystem.shooterDefaultCommand(SmartDashboard.getNumber("Shooter Default kp", 0)));
+    //m_ShooterSubsystem.setDefaultCommand(m_ShooterSubsystem.runVelocity(()-> 0));
 
     /*
      * Default command for the intake, this ensures that
@@ -181,6 +196,23 @@ public class RobotContainer {
      * it reads the y-axis from each controller and sets each climber to speed
      */
     m_ClimberSubsystem.setDefaultCommand(climberDefaultComand());
+  }
+
+  /*
+   * If we are already amplified, de amplify
+   * If we are not amplified, amplify
+   */
+  private Command amplifyButtonCommand(){
+    return new ConditionalCommand(
+      
+      // Command on true
+      m_LedSubsystem.deAmplify(), 
+
+      // Command on false
+      m_LedSubsystem.amplifyLED(), 
+
+      // Boolean supplier condition
+      ()-> m_LedSubsystem.getColor().equals("amplify"));
   }
 
   /*
@@ -209,9 +241,10 @@ public class RobotContainer {
       race(
         // LED is for driver preference, so he knows when the robot is still intaking
         m_LedSubsystem.setColorToGreen()
-          .andThen(
-            m_IntakeSubsystem.runIntakeAndIndexerPercent(0.5))
-          , waitUntil(()-> m_IntakeSubsystem.getBeamBreak())
+        .andThen(m_IntakeSubsystem.runIntakeAndIndexerPercent(0.5))
+        ,
+        waitUntil(()-> m_IntakeSubsystem.getBeamBreak())
+
       ),
       m_ShooterSubsystem.runVelocity(()-> 0))
       )
@@ -278,19 +311,25 @@ public class RobotContainer {
    * Sausages the note in the shooter wheels, gets us ready for amp scoring
    */
   private Command sausageNote(){
-        return 
-            // Uses closed loop control in indexer to move the note into the shooter wheel
-            m_IntakeSubsystem.indexerClosedLoopControl(0.75, 2)
+      return 
+          // Uses closed loop control in indexer to move the note into the shooter wheel
+          m_IntakeSubsystem.indexerClosedLoopControl(1.5, 1)
 
-            // Moves the note into place by using closed loop control
-            .andThen(m_ShooterSubsystem.closedLoopRotation(0.75, 1));
+          // Moves the note into place by using closed loop control
+          .andThen(
+            race(
+              m_ShooterSubsystem.closedLoopRotation(0.75, 1),
+              m_IntakeSubsystem.runIndexerToSpeed(0.1)
+            )
+            );
   }
   
   /*
    * Gives a quick closed loop rotation to give the note a quick push into the amp
    */
+
   private Command flickToAmp(){
-    return m_ShooterSubsystem.closedLoopRotation(2, 0.6);
+    return m_ShooterSubsystem.closedLoopRotation(2, 0.5);
   }
 
   /*
@@ -328,31 +367,30 @@ public class RobotContainer {
   private Command shootNoteCommand(){
     return new SelectCommand<>(
 
-    Map.ofEntries(
+      Map.ofEntries(
 
-      Map.entry("amp", 
+        Map.entry("amp", 
+          // Moves arm to position
+          armToPosition(Constants.Arm.AMP_SCORE_RADIANS)
+          // Flicks the note into the amp
+          .andThen(flickToAmp())
+          .andThen(new WaitCommand(1.0))),
 
-        // Moves arm to position
-        armToPosition(Constants.Arm.AMP_SCORE_RADIANS)
+          
+        Map.entry("speaker", 
+          // Moves the arm into position for shooting
+          armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS)
+          // Shoots the note into speaker
+          .andThen(shoot(2222)).withTimeout(2)),
 
-        // Flicks the note into the amp
-        .andThen(flickToAmp())),
 
-      Map.entry("speaker", 
-
-        // Moves the arm into position for shooting
-        armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS)
-
-        // Shoots the note into speaker
-        .andThen(shoot(2222)).withTimeout(2)),
-
-      Map.entry("stockpile", 
-
-        // Moves arm into position for stockpiling
-        armToPosition(Constants.Arm.STOCKPILE_POSITION_RADIANS)
-
-        // Shoots the note at full speed
-        .andThen(shoot(5700)).withTimeout(2))),
+        Map.entry("stockpile", 
+          // Moves arm into position for stockpiling
+          armToPosition(Constants.Arm.STOCKPILE_POSITION_RADIANS)
+          // Shoots the note at full speed
+          .andThen(shoot(5700)).withTimeout(2))
+          
+      ),
 
 
     // condition
@@ -367,5 +405,6 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     return autoChooser.getSelected();
+    //return new WaitCommand(1);
   }
 }

@@ -7,6 +7,7 @@ package frc.robot.subsystems;
 import java.util.function.DoubleSupplier;
 
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkBase.IdleMode;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj2.command.Command;
@@ -20,6 +21,9 @@ public class ClimberSubsystem extends SubsystemBase {
   public ClimberSubsystem() {
     climberMotor1 = new CANSparkMax(Constants.Climber.CLIMBER_MOTOR_ID_1, MotorType.kBrushless);
     climberMotor2 = new CANSparkMax(Constants.Climber.CLIMBER_MOTOR_ID_2, MotorType.kBrushless);
+
+    climberMotor1.setIdleMode(IdleMode.kBrake);
+    climberMotor2.setIdleMode(IdleMode.kBrake);
   }
 
   public Command setClimberMotor1(double speed){
@@ -40,8 +44,8 @@ public class ClimberSubsystem extends SubsystemBase {
     return run(
         ()->
             {
-                climberMotor1.set(supplier1.getAsDouble());
-                climberMotor2.set(supplier2.getAsDouble());
+                climberMotor1.set(supplier2.getAsDouble());
+                climberMotor2.set(-supplier1.getAsDouble());
             }
     );
   }
