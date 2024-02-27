@@ -53,7 +53,7 @@ public class RobotContainer {
   private final XboxController climberController = new XboxController(1);
   private final JoystickButton back_Button = new JoystickButton(controller, 7);
   private final JoystickButton a_Button = new JoystickButton(controller, 1);
-  //private final JoystickButton b_Button = new JoystickButton(controller, 2);
+  private final JoystickButton b_Button = new JoystickButton(controller, 2);
   private final JoystickButton x_Button = new JoystickButton(controller, 3);
 
   private final JoystickButton y_Button = new JoystickButton(controller, 4);
@@ -98,6 +98,13 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
+    //b_Button.onTrue(sausageNote());
+    // right_Bumper.onTrue(
+    //   sausageToBeamBreak()
+    //   .andThen(
+    //   flickToAmp())
+    // );
+    //left_Bumper.onTrue(sausageToBeamBreak());
     /*
      * LEFT BUMPER BINDING:
      * 
@@ -125,7 +132,10 @@ public class RobotContainer {
      * 
      * Spits out a note using the intake and indexer
      */
-    right_Bumper.whileTrue(m_IntakeSubsystem.runIntakeAndIndexerPercent(-0.1));
+    // right_Bumper.onTrue(
+    //   armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS)
+    //   .andThen(m_IntakeSubsystem.runIntakeAndIndexerPercent(-0.1))
+    // );
 
 
     /*
@@ -182,7 +192,7 @@ public class RobotContainer {
      * We use closed loop control instead of run velocity because it while fight better,
      * keeps the note in place nicely
      */
-    m_ShooterSubsystem.setDefaultCommand(m_ShooterSubsystem.shooterDefaultCommand(SmartDashboard.getNumber("Shooter Default kp", 0)));
+    m_ShooterSubsystem.setDefaultCommand(m_ShooterSubsystem.shooterDefaultCommand(0));
     //m_ShooterSubsystem.setDefaultCommand(m_ShooterSubsystem.runVelocity(()-> 0));
 
     /*
@@ -283,12 +293,21 @@ public class RobotContainer {
    */
   private Command shoot(int percentRPM) {
     return race(
+      
+      // run the shooter wheels to speed
       m_ShooterSubsystem.runVelocity(()-> (percentRPM/5700.0)),
+
+      // wait for shooters to get up to speed
       waitUntil(m_ShooterSubsystem::isRunning)
         .andThen(waitUntil(m_ShooterSubsystem::shooterIsUpToSpeed))
         .andThen(
+
             race(
+
+              // the shooters are now up to speed, so we run the indexers forward full speed
               m_IntakeSubsystem.runIndexerToSpeed(1),
+
+              // the following logic watches for a velocity dip in the shooter wheels
               waitUntil(m_ShooterSubsystem::shooterIsNotUpToSpeed)
                 .andThen(
                   waitUntil(m_ShooterSubsystem::shooterIsUpToSpeed)
@@ -297,9 +316,12 @@ public class RobotContainer {
         )
             
     )
+
+    // tells us that we do not have a note in possesion anymore
     .andThen(m_IntakeSubsystem.setNoteStatus(false))
+
+    // turns the led's off, this tells the driver we do not have a note anymore
     .andThen(m_LedSubsystem.turnColorOff())
-    //.andThen(m_ShooterSubsystem.runVelocity(()-> (550.0 / 5700.0)).withTimeout(2)) //amp shooting follow through
     ;
   }
 
@@ -318,10 +340,13 @@ public class RobotContainer {
           // Moves the note into place by using closed loop control
           .andThen(
             race(
-              m_ShooterSubsystem.closedLoopRotation(0.75, 1),
+              // ends once it reaches the desired amount of rotations (0.75 in this case)
+              m_ShooterSubsystem.closedLoopRotation(0.75, 1, 0.0),
+
+              // Doesn't end
               m_IntakeSubsystem.runIndexerToSpeed(0.1)
             )
-            );
+          );
   }
   
   /*
@@ -329,7 +354,15 @@ public class RobotContainer {
    */
 
   private Command flickToAmp(){
-    return m_ShooterSubsystem.closedLoopRotation(2, 0.5);
+
+    // kp will most likely be subject to tuning
+    return m_ShooterSubsystem.closedLoopRotation(1.1, 0.12, 0.0);
+
+  }
+
+  private Command sausageToBeamBreak(){
+    return m_ShooterSubsystem.runVelocity(()-> 0.025).until(()-> m_IntakeSubsystem.getBeamBreak())
+            .andThen(m_ShooterSubsystem.closedLoopRotation(0, 0, 0));
   }
 
   /*
@@ -370,30 +403,42 @@ public class RobotContainer {
       Map.ofEntries(
 
         Map.entry("amp", 
+
           // Moves arm to position
           armToPosition(Constants.Arm.AMP_SCORE_RADIANS)
+
           // Flicks the note into the amp
-          .andThen(flickToAmp())
-          .andThen(new WaitCommand(1.0))),
+          .andThen(sausageToBeamBreak())
+          .andThen(
+          flickToAmp()
+
+          // The wait command is here because if we move the arm back to intake position 
+          //immediatly after amp scoring, if we miss the note will bounce back and get stuck in the robot
+          .andThen(m_LedSubsystem.turnColorOff())
+          .andThen(new WaitCommand(1.0)))),
 
           
         Map.entry("speaker", 
+
           // Moves the arm into position for shooting
           armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS)
+
           // Shoots the note into speaker
-          .andThen(shoot(2222)).withTimeout(2)),
+          .andThen(shoot(2222)).withTimeout(2)
+          .andThen(m_LedSubsystem.turnColorOff())),
 
 
         Map.entry("stockpile", 
+
           // Moves arm into position for stockpiling
           armToPosition(Constants.Arm.STOCKPILE_POSITION_RADIANS)
+
           // Shoots the note at full speed
-          .andThen(shoot(5700)).withTimeout(2))
+          .andThen(shoot(2222)).withTimeout(2))
           
       ),
 
-
-    // condition
+    // condition (boolean supplier)
     ()-> m_ShooterSubsystem.getScoringStatus());
   }
 

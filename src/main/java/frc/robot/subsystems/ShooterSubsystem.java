@@ -145,10 +145,15 @@ public class ShooterSubsystem extends SubsystemBase {
   public Command shooterDefaultCommand(double kp_rot){
     return new FunctionalCommand(
       ()-> {
+        shooterNeo1PID.setIAccum(0);
+        shooterNeo2PID.setIAccum(0);
 
         // makes sure to set the kp, kp for shooting vs closed loop rotation is very different
         shooterNeo1PID.setP(1);
         shooterNeo2PID.setP(1);
+
+        shooterNeo1PID.setI(0);
+        shooterNeo2PID.setI(0);
         
         // this is just for good measure
         shooterNeo1PID.setOutputRange(-1, 1);
@@ -175,14 +180,19 @@ public class ShooterSubsystem extends SubsystemBase {
   }
 
   // rotates a specific amount of rotations using closed loop control
-  public Command closedLoopRotation(double rotations, double kp_rot){
+  public Command closedLoopRotation(double rotations, double kp_rot, double ki_rot){
 
     return new FunctionalCommand(
       ()-> {
+        shooterNeo1PID.setIAccum(0);
+        shooterNeo2PID.setIAccum(0);
 
         // makes sure to set the kp, kp for shooting vs closed loop rotation is very different
         shooterNeo1PID.setP(kp_rot);
         shooterNeo2PID.setP(kp_rot);
+
+        shooterNeo1PID.setI(ki_rot);
+        shooterNeo2PID.setI(ki_rot);
         
         // this is just for good measure
         shooterNeo1PID.setOutputRange(-1, 1);
@@ -199,10 +209,13 @@ public class ShooterSubsystem extends SubsystemBase {
         shooterNeo2PID.setReference(-rotations, CANSparkMax.ControlType.kPosition);
       },
 
-      interrupted-> {},
+      interrupted-> {
+        shooterNeo1PID.setI(0);
+        shooterNeo2PID.setI(0);
+      },
 
       // end condition
-      ()-> (shooterNeoEncoder1.getPosition() >= rotations)
+      ()-> (Math.abs(shooterNeoEncoder1.getPosition()) >= rotations * 0.95)
 
       // ALWAYS REQUIRE THE SUBSYSTEM!!
     , this);
@@ -212,8 +225,14 @@ public class ShooterSubsystem extends SubsystemBase {
   public Command runVelocity(DoubleSupplier velocity) {
     return new FunctionalCommand(
         ()-> {
+          shooterNeo1PID.setIAccum(0);
+          shooterNeo2PID.setIAccum(0);
+
           shooterNeo1PID.setP(kP);
           shooterNeo2PID.setP(kP);
+
+          shooterNeo1PID.setI(0);
+          shooterNeo2PID.setI(0);
         },
         () -> {
           setPointRPM = velocity.getAsDouble() * maxRPM;
@@ -243,13 +262,8 @@ public class ShooterSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    SmartDashboard.putNumber("Encoder 1 Velocity", shooterNeoEncoder1.getVelocity());
-    SmartDashboard.putNumber("Encoder 2 Velocity", -shooterNeoEncoder2.getVelocity());
+    SmartDashboard.putNumber("Position 2", shooterNeoEncoder2.getPosition());
     SmartDashboard.putNumber("Position 1", shooterNeoEncoder1.getPosition());
-    SmartDashboard.putString("Scoring Mode", scoringStatus);
-    SmartDashboard.putBoolean("Up To Speed", shooterIsUpToSpeed());
-    SmartDashboard.putNumber("Motor Current 1", shooterNeo1.getOutputCurrent());
-    SmartDashboard.putNumber("Motor Current 2", shooterNeo2.getOutputCurrent());
   }
 
   @Override

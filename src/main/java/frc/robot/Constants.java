@@ -153,7 +153,7 @@ public final class Constants {
         public static final double STOCKPILE_POSITION_RADIANS = 0.3;
         public static final double INTAKE_POSITION_RADIANS = 0.99;
         public static final double SHOOT_POSITION_RADIANS = 1.05;
-        public static final double AMP_SCORE_RADIANS = 2.08;
+        public static final double AMP_SCORE_RADIANS = 2.0;//Math.toRadians(116.5);//2.08;
         public static final double FENDER_SHOT_POSITION_RADIANS = 0;
 
         public static final double MAX_POSITION_RADIANS = 2.17;

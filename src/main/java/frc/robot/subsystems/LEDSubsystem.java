@@ -88,7 +88,7 @@ public class LEDSubsystem extends SubsystemBase {
     switch (color) {
       case "off":
         for (int i = 0; i < m_LED_Buffer.getLength(); ++i) {
-          m_LED_Buffer.setRGB(i, 0, 0, 0);
+          m_LED_Buffer.setRGB(i, 255, 0, 255);
         }
         break;
       case "green":
@@ -103,7 +103,7 @@ public class LEDSubsystem extends SubsystemBase {
         break;
       default:
         for (int i = 0; i < m_LED_Buffer.getLength(); ++i) {
-          m_LED_Buffer.setRGB(i, 0, 0, 0);
+          m_LED_Buffer.setRGB(i, 255, 0, 255);
         }
         break;
     }

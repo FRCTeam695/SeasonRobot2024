@@ -32,7 +32,7 @@
   "constraintZones": [],
   "eventMarkers": [
     {
-      "name": "Begin Intake",
+      "name": "Shoot Position",
       "waypointRelativePos": 0.4,
       "command": {
         "type": "parallel",
