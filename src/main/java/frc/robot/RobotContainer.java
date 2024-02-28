@@ -12,21 +12,31 @@ import frc.robot.subsystems.LEDSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.trajectory.TrajectoryConfig;
+import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 import edu.wpi.first.wpilibj2.command.SelectCommand;
+import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
+import java.util.List;
 import java.util.Map;
 import java.util.function.DoubleSupplier;
 
@@ -74,16 +84,23 @@ public class RobotContainer {
   private final DoubleSupplier climberController_y1 = () -> MathUtil.applyDeadband(climberController.getRawAxis(1), 0.15);
   private final DoubleSupplier climberController_y2 = ()-> MathUtil.applyDeadband(climberController.getRawAxis(5), 0.15);
 
+  private PIDController xController = new PIDController(1, 0, 0);
+  private PIDController yController = new PIDController(1, 0, 0);
+  private ProfiledPIDController thetaController = new ProfiledPIDController(Constants.Swerve.PROFILED_KP_VALUE, 0,
+      0, Constants.Swerve.TRAPEZOID_THETA_CONSTRAINTS);
+
+
 
   // Triggers
   private final Trigger shoot_Trigger = new Trigger(()-> (right_Trigger.getAsDouble() > .60));
 
   private final SendableChooser<Command> autoChooser;
+  private final SendableChooser<Integer> offsetChooser = new SendableChooser<>();
 
   public RobotContainer() {
 
     NamedCommands.registerCommand("Intake Note", intake());
-    NamedCommands.registerCommand("Shoot Note", autonShoot());
+    NamedCommands.registerCommand("Shoot Note", shoot(2222).withTimeout(2));
     NamedCommands.registerCommand("Shoot Position", armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS));
 
     autoChooser = AutoBuilder.buildAutoChooser();
@@ -91,10 +108,22 @@ public class RobotContainer {
     configureBindings();
     defaultCommands();
 
-    //SmartDashboard.putData("Auto Chooser", autoChooser);
+    xController.reset();
+    yController.reset();
+    thetaController.reset(null);
+
+    SmartDashboard.putData("Auto Chooser", autoChooser);
+    SmartDashboard.putData("Swerve Subsystem", m_SwerveSubsystem);
     SmartDashboard.putData("Intake Subsystem", m_IntakeSubsystem);
     SmartDashboard.putData("Shooter Subsystem", m_ShooterSubsystem);
     
+    
+    offsetChooser.addOption("left", -120);
+    offsetChooser.addOption("right", 120);
+    offsetChooser.addOption("mid", 180);
+    offsetChooser.setDefaultOption("mid", 180);
+
+    SmartDashboard.putData("gyro offsets", offsetChooser);
   }
 
   private void configureBindings() {
@@ -125,6 +154,15 @@ public class RobotContainer {
       shootNoteCommand()
       .andThen(armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS)));
 
+    
+    /*
+     * B BUTTON BINDING:
+     * 
+     * Resets the gyro to the value chosen on smartdashboard,
+     * should be used at the beginning of a match
+     */  
+    b_Button.onTrue(new InstantCommand(()-> setGyroOffset(), m_SwerveSubsystem).ignoringDisable(true));
+
 
 
     /*
@@ -132,10 +170,14 @@ public class RobotContainer {
      * 
      * Spits out a note using the intake and indexer
      */
-    // right_Bumper.onTrue(
-    //   armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS)
-    //   .andThen(m_IntakeSubsystem.runIntakeAndIndexerPercent(-0.1))
-    // );
+    right_Bumper.whileTrue(
+      armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS)
+      .andThen(parallel(
+        m_IntakeSubsystem.runIndexerToSpeed(1),
+        m_ShooterSubsystem.runVelocity(()-> 1000)
+      ))
+
+    );
 
 
     /*
@@ -325,10 +367,6 @@ public class RobotContainer {
     ;
   }
 
-  private Command autonShoot(){
-    return shoot(2222).andThen(m_LedSubsystem.turnColorOff()).withName("Shoot Note");
-  }
-
   /*
    * Sausages the note in the shooter wheels, gets us ready for amp scoring
    */
@@ -356,7 +394,7 @@ public class RobotContainer {
   private Command flickToAmp(){
 
     // kp will most likely be subject to tuning
-    return m_ShooterSubsystem.closedLoopRotation(1.1, 0.12, 0.0);
+    return m_ShooterSubsystem.closedLoopRotation(1.1, 0.17, 0.0);
 
   }
 
@@ -442,6 +480,36 @@ public class RobotContainer {
     ()-> m_ShooterSubsystem.getScoringStatus());
   }
 
+  public Command scorePreload(){
+    return armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS).andThen(shoot(2222));
+  }
+
+  public void setGyroOffset(){
+    double val = offsetChooser.getSelected();
+    m_SwerveSubsystem.setGyro(val);
+  }
+
+  // public Command startingAuton(){
+  //   //return scorePreload()
+  //   //.andThen(mid_to_2_command())
+  //   return mid_to_2_command()
+  //   ;
+  // }
+
+  // public Command mid_to_2_command(){
+  //   Trajectory trajectory1 = mid_to_2();
+
+  //   var swerveControllerCommand = new SwerveControllerCommand(trajectory1, m_SwerveSubsystem::getPose,
+  //       Constants.Swerve.kDriveKinematics, xController, yController, thetaController, m_SwerveSubsystem::setModules,
+  //       m_SwerveSubsystem);
+
+  //   return runOnce(
+  //     ()-> m_SwerveSubsystem.resetOdometry(trajectory1.getInitialPose())
+  //   )
+  //   .andThen(swerveControllerCommand)
+  //   .andThen(()-> m_SwerveSubsystem.stopModules())
+  //   ;
+  // }
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
@@ -449,7 +517,32 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
+    //return startingAuton();
     return autoChooser.getSelected();
     //return new WaitCommand(1);
   }
+
+  // public Trajectory mid_to_2(){
+  //   TrajectoryConfig trajectoryConfig1 = new TrajectoryConfig(Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS * 0.2, 
+  //                                                             3);
+    
+  //   Trajectory trajectory1 =
+  //       TrajectoryGenerator.generateTrajectory(
+
+  //         new Pose2d(0, 0, new Rotation2d(Math.PI)),
+
+  //         List.of(new Translation2d(Units.inchesToMeters(30), 0)),
+
+  //         new Pose2d(Units.inchesToMeters(62), Units.inchesToMeters(0), new Rotation2d(Math.PI)),
+
+  //         trajectoryConfig1);
+
+  //   return trajectory1;
+  // }
+
+
+
+
+
+
 }

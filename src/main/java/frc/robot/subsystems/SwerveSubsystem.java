@@ -25,6 +25,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -93,7 +94,9 @@ public class SwerveSubsystem extends SubsystemBase {
         new Thread(() -> {
             try {
                 Thread.sleep(1000);
-                resetSwerve();
+                gyro.reset();
+                gyro.setAngleAdjustment(180);
+                setRelativeTurnEncoderValue();
             } catch (Exception e) {
             }
         }).start();
@@ -117,6 +120,11 @@ public class SwerveSubsystem extends SubsystemBase {
         return gyro.getPitch();
     }
 
+    public void setGyro(double val){
+        gyro.reset();
+        gyro.setAngleAdjustment(val);
+    }
+
     //getHeading returns the direction the robot is facing
     //assumes we have already reset the gyro
     public double getHeading() {
@@ -128,7 +136,11 @@ public class SwerveSubsystem extends SubsystemBase {
 
     //tells pathplanner if it should flip the paths or not, this is dependant on what aliance we are on and also what game we are playing
     private boolean isFlipped(){
-        return true;
+        var alliance = DriverStation.getAlliance();
+              if (alliance.isPresent()) {
+                return alliance.get() == DriverStation.Alliance.Red;
+              }
+        return false;
     }
 
     //Outdated method for using pure odometry to make autons
@@ -296,14 +308,18 @@ public class SwerveSubsystem extends SubsystemBase {
                         bottomLeft.getPosition(), bottomRight.getPosition() });
         m_field.setRobotPose(getPose());
 
+        SmartDashboard.putNumber("gyro", getHeading());
         SmartDashboard.putString("Robot Pose", odometry.getEstimatedPosition().toString());
     }
 
     //Allows us to manually reset the odometery, used with vision pose estimation
     public void resetOdometry(Pose2d pose) {
-        gyro.setAngleAdjustment(pose.getRotation().getDegrees());
+        // gyro.reset();
+        // gyro.setAngleAdjustment(pose.getRotation().getDegrees());
+
+        SmartDashboard.putString("adjustment", pose.toString());
         odometry.resetPosition(
-                gyro.getRotation2d(),
+                new Rotation2d( (Math.PI / 180) * getHeading()),
                 new SwerveModulePosition[] {
                         frontRight.getPosition(),
                         frontLeft.getPosition(),
