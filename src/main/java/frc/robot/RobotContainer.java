@@ -16,11 +16,6 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.trajectory.TrajectoryConfig;
-import edu.wpi.first.math.trajectory.TrajectoryGenerator;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -31,7 +26,6 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 import edu.wpi.first.wpilibj2.command.SelectCommand;
-import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -81,8 +75,8 @@ public class RobotContainer {
   private final DoubleSupplier left_yAxis = () -> (controller.getRawAxis(1));
   private final DoubleSupplier right_xAxis = () -> (controller.getRawAxis(4));
   private final DoubleSupplier right_Trigger = () -> (controller.getRawAxis(3));
-  private final DoubleSupplier climberController_y1 = () -> MathUtil.applyDeadband(climberController.getRawAxis(1), 0.15);
-  private final DoubleSupplier climberController_y2 = ()-> MathUtil.applyDeadband(climberController.getRawAxis(5), 0.15);
+  private final DoubleSupplier climberController_y1 = () -> MathUtil.applyDeadband(climberController.getRawAxis(1), 0.05);
+  private final DoubleSupplier climberController_y2 = ()-> MathUtil.applyDeadband(climberController.getRawAxis(5), 0.05);
 
   private PIDController xController = new PIDController(1, 0, 0);
   private PIDController yController = new PIDController(1, 0, 0);
@@ -118,8 +112,8 @@ public class RobotContainer {
     SmartDashboard.putData("Shooter Subsystem", m_ShooterSubsystem);
     
     
-    offsetChooser.addOption("left", -120);
-    offsetChooser.addOption("right", 120);
+    offsetChooser.addOption("left", 120);
+    offsetChooser.addOption("right", -120);
     offsetChooser.addOption("mid", 180);
     offsetChooser.setDefaultOption("mid", 180);
 
@@ -174,7 +168,7 @@ public class RobotContainer {
       armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS)
       .andThen(parallel(
         m_IntakeSubsystem.runIndexerToSpeed(1),
-        m_ShooterSubsystem.runVelocity(()-> 1000)
+        m_ShooterSubsystem.runVelocity(()-> 600)
       ))
 
     );
@@ -217,8 +211,9 @@ public class RobotContainer {
      */
     amplify_Button.onTrue(amplifyButtonCommand());
 
-    // This is just for testing purposes
-    y_Button.onTrue(runOnce(()-> m_SwerveSubsystem.resetOdometry(new Pose2d(0, 0, new Rotation2d(0)))));
+    // y_Button.onTrue(
+    //   armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS)
+    // );
   }
 
   private void defaultCommands() {
@@ -382,7 +377,7 @@ public class RobotContainer {
               m_ShooterSubsystem.closedLoopRotation(0.75, 1, 0.0),
 
               // Doesn't end
-              m_IntakeSubsystem.runIndexerToSpeed(0.1)
+              m_IntakeSubsystem.runIndexerToSpeed(0.2)
             )
           );
   }
@@ -394,8 +389,8 @@ public class RobotContainer {
   private Command flickToAmp(){
 
     // kp will most likely be subject to tuning
-    return m_ShooterSubsystem.closedLoopRotation(1.1, 0.17, 0.0);
-
+    //0.17
+    return m_ShooterSubsystem.closedLoopRotation(1.1, 0.12, 0.0);
   }
 
   private Command sausageToBeamBreak(){

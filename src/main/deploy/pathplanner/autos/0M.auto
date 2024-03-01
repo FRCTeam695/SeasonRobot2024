@@ -2,10 +2,10 @@
   "version": 1.0,
   "startingPose": {
     "position": {
-      "x": 0.73,
-      "y": 6.56
+      "x": 1.25,
+      "y": 5.55
     },
-    "rotation": -120.0
+    "rotation": 180.0
   },
   "command": {
     "type": "sequential",
@@ -24,33 +24,40 @@
           }
         },
         {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "0M-out"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intake Note"
+                }
+              }
+            ]
+          }
+        },
+        {
           "type": "path",
           "data": {
-            "pathName": "A-m4"
+            "pathName": "0M-back"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Stockpile Position"
+            "name": "Shoot Position"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "Shoot Note"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "m4-m5"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "m5-m6"
           }
         }
       ]

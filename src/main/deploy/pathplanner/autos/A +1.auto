@@ -3,7 +3,7 @@
   "startingPose": {
     "position": {
       "x": 0.73,
-      "y": 6.562
+      "y": 6.56
     },
     "rotation": -120.0
   },
@@ -11,6 +11,18 @@
     "type": "sequential",
     "data": {
       "commands": [
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot Position"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot Note"
+          }
+        },
         {
           "type": "path",
           "data": {
@@ -27,12 +39,6 @@
           "type": "named",
           "data": {
             "name": "Shoot Note"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "A-m4"
           }
         }
       ]

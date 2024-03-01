@@ -2,10 +2,10 @@
   "version": 1.0,
   "startingPose": {
     "position": {
-      "x": 0.73,
-      "y": 6.56
+      "x": 0.44577089154178473,
+      "y": 6.916726910376898
     },
-    "rotation": -120.0
+    "rotation": 178.92169196938323
   },
   "command": {
     "type": "sequential",
@@ -14,13 +14,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "A-1"
+            "pathName": "0A-shot"
           }
         },
         {
-          "type": "path",
+          "type": "named",
           "data": {
-            "pathName": "1-M"
+            "name": "Shoot Position"
           }
         },
         {
@@ -30,45 +30,40 @@
           }
         },
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "M-2"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "0A-out"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intake Note"
+                }
+              }
+            ]
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "2-M"
+            "pathName": "0A-back"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot Position"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "Shoot Note"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "M-3"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "3-M"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Shoot Note"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "M-m5"
           }
         }
       ]
