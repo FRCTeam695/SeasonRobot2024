@@ -63,6 +63,7 @@ public class RobotContainer {
   private final JoystickButton y_Button = new JoystickButton(controller, 4);
   private final JoystickButton left_Bumper = new JoystickButton(controller, 5);
   private final JoystickButton right_Bumper = new JoystickButton(controller, 6);
+  private final JoystickButton right_Bumper_Climber = new JoystickButton(climberController, 6);
   private final JoystickButton amplify_Button = new JoystickButton(climberController, 1);
 
   //Network Table Stuff
@@ -211,9 +212,23 @@ public class RobotContainer {
      */
     amplify_Button.onTrue(amplifyButtonCommand());
 
-    // y_Button.onTrue(
-    //   armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS)
-    // );
+    /*
+     * Y BUTTON BINDING:
+     * 
+     * Moves the arm to shooting positon and sets the scoring status to speaker
+     * This is used incase Ben accidentally stockpiles when meaning to shoot.
+     */
+    y_Button.onTrue(
+      armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS)
+      .andThen(m_ShooterSubsystem.setScoringStatus("speaker"))
+    );
+
+    /*
+     * CLIMBER CONTROLLER RIGHT BUMPER BINDING:
+     * 
+     * Allows the operator to override the softlimits on the climbers temporarily
+     */
+    right_Bumper_Climber.whileTrue(m_ClimberSubsystem.softLimitOverrideSlow(climberController_y1, climberController_y2));
   }
 
   private void defaultCommands() {
