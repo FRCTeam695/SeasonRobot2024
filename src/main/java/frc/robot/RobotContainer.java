@@ -14,8 +14,6 @@ import frc.robot.subsystems.SwerveSubsystem;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -30,7 +28,6 @@ import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
-import java.util.List;
 import java.util.Map;
 import java.util.function.DoubleSupplier;
 
@@ -304,7 +301,7 @@ public class RobotContainer {
         // LED is for driver preference, so he knows when the robot is still intaking
         m_LedSubsystem.setColorToGreen()
         .andThen(m_IntakeSubsystem.runIntakeAndIndexerPercent(0.5))
-        ,
+        , 
         waitUntil(()-> m_IntakeSubsystem.getBeamBreak())
 
       ),
@@ -343,11 +340,13 @@ public class RobotContainer {
    * velocity time graph for the shootermotor for a dip (indicating we shot the note)
    * or with just a two second timeout (just in case it somehow shoots without having a note)
    */
-  private Command shoot(int percentRPM) {
+  private Command shoot(int RPM) {
     return race(
       
       // run the shooter wheels to speed
-      m_ShooterSubsystem.runVelocity(()-> (percentRPM/5700.0)),
+      m_ShooterSubsystem.runVelocity(()-> (RPM/5700.0)),
+
+
 
       // wait for shooters to get up to speed
       waitUntil(m_ShooterSubsystem::isRunning)

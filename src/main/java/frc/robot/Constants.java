@@ -169,4 +169,15 @@ public final class Constants {
         public static final int CLIMBER_MOTOR_ID_1 = 55;
         public static final int CLIMBER_MOTOR_ID_2 = 56;
     }
+
+    public static class Feild{
+
+        public static class Red{
+            
+        }
+
+        public static class Blue{
+
+        }
+    }
 }

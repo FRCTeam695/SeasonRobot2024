@@ -5,7 +5,6 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -28,10 +27,12 @@ public class SwerveModule{
     private final double drivingGearRatio;
     private final double maxSpeedMPS;
     private final double wheelCircumference;
+    public final int index;
 
 
-    public SwerveModule(int driveMotorId, int turnMotorId, double absoluteEncoderOffset, int TurnCANCoderId){
+    public SwerveModule(int driveMotorId, int turnMotorId, double absoluteEncoderOffset, int TurnCANCoderId, int moduleIndex){
         this.absoluteEncoderOffset = absoluteEncoderOffset;
+        this.index = moduleIndex;
 
         //Current limit to the falcons
         SupplyCurrentLimitConfiguration falconlimit = new SupplyCurrentLimitConfiguration();
@@ -102,30 +103,41 @@ public class SwerveModule{
         return turnDegreeValue * Math.PI / 180;
     }
 
-    //falconToRps converts falcon ticks to rotations per second of the wheel
+    /*
+     * Converts falcon ticks to rotations per second on the wheel
+     */
     public double falconToRPS(double velocityCounts, double gearRatio) {
         double motorRPS = velocityCounts * (10.0 / 2048.0);        
         double mechRPS = motorRPS / gearRatio * -1;  //multiply by negative 1 bcs the falcon is upside down
         return mechRPS;
     }
 
-    //degreesToFalcon converts degrees to falcon ticks
+    /*
+    Converts degrees to falcon ticks
+     */
     public double degreesToFalcon(double degrees, double gearRatio) {
         return degrees / (360.0 / (gearRatio * 2048.0));
     }
 
-    //Gets the drive velocity of the robot in meters per second
+    /*
+     * Gets the velocity of the module in meters per second
+     */
     public double getDriveVelocity() {
         double wheelRPS = falconToRPS(driveMotor.getSelectedSensorVelocity(), drivingGearRatio);
         double wheelMPS = (wheelRPS * wheelCircumference);
         return wheelMPS;
     }
 
+    /*
+     * Gets the raw cancoder value
+     */
     public double getRawCancoder(){
         return absoluteEncoder.getAbsolutePosition();
     }
 
-    //Gets the absolute encoder value in radians
+    /*
+     * Gets the value of the absolute encoder in radians
+     */
     public double getAbsoluteEncoderRadians() {
         double raw_val = absoluteEncoder.getAbsolutePosition() - absoluteEncoderOffset;
 
@@ -140,17 +152,23 @@ public class SwerveModule{
         return raw_val * Math.PI / 180; //Converts to radians
     }
 
-    //Gets the velocity of the wheel and the direction the wheel is turned to
+    /*
+     * Returns the velocity of the wheel and to angle the wheel is turned to
+     */
     public SwerveModuleState getState() {
         return new SwerveModuleState(getDriveVelocity(), new Rotation2d(getTurnPosition(false)));
     }
 
-    //Converts falcon ticks to meters
+    /*
+     * Converts falcon ticks to meters
+     */
     public double falconToMeters(double positionCounts, double circumference, double gearRatio){
         return positionCounts * (circumference / (gearRatio * 2048.0));
     }
 
-    //getPosition returns the position of the wheel, similar too a SwerveModuleState
+    /*
+     * Returns the position of the swerve module
+     */
     public SwerveModulePosition getPosition() {
         return new SwerveModulePosition(
             falconToMeters(driveMotor.getSelectedSensorPosition(), wheelCircumference, drivingGearRatio), 
@@ -158,13 +176,17 @@ public class SwerveModule{
         );
     }
 
-    //zeroDrivePosition sets the drive motor encoders to 0
+    /*
+     * Sets the drive motor position to zero
+     */
     public void zeroDrivePosition(){
         driveMotor.setSelectedSensorPosition(0);
     }
 
-    //setDesiredState sets the swerve modules to a given state
-    public void setDesiredState(SwerveModuleState state, int motor) {
+    /*
+     * Sets the module to a given state
+     */
+    public void setDesiredState(SwerveModuleState state) {
         if (Math.abs(state.speedMetersPerSecond) < 0.1){
            stop();
            return;
@@ -187,13 +209,18 @@ public class SwerveModule{
         turnMotor.set(ControlMode.PercentOutput, turnMotorOutput);
     }
 
-    //stops the drive and turn motors
+    /*
+     * Stops the drive and turn motors, drives them to zero velocity
+     */
     public void stop(){
         driveMotor.set(ControlMode.PercentOutput, 0);
         turnMotor.set(ControlMode.PercentOutput, 0);
     }
 
-    //setTurnEncoder sets the relative turn encoder to a certain radian value (Usually an angle given by the absolute encoder)
+    /*
+     * Sets the turn encoder to a specific radian value, 
+     * often recieved from the absolute encoder
+     */
     public void setTurnEncoder(double radians) {
         double desired_ticks = radians / Math.PI * (1024 * turningGearRatio);
         turningPidController.reset();
@@ -201,7 +228,9 @@ public class SwerveModule{
         turnMotor.setSelectedSensorPosition(desired_ticks);
     }
     
-    //gets the position of the drive motor
+    /*
+     * Gets the position of the drive motor in ticks
+     */
     public double getDriveTicks(){
         return driveMotor.getSelectedSensorPosition();
     }

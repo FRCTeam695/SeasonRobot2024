@@ -1,18 +1,13 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj2.command.Command;
-//import frc.robot.subsystems.SwerveModule;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.LimelightHelpers;
 
-import java.util.List;
 
 import com.kauailabs.navx.frc.AHRS;
 import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.path.GoalEndState;
-import com.pathplanner.lib.path.PathConstraints;
-import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.ReplanningConfig;
@@ -20,18 +15,18 @@ import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.SPI;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class SwerveSubsystem extends SubsystemBase {
+
+    private final SwerveModule[] modules;
 
     private final SwerveModule frontRight;
     private final SwerveModule frontLeft;
@@ -39,102 +34,114 @@ public class SwerveSubsystem extends SubsystemBase {
     private final SwerveModule bottomRight;
 
     private final Field2d m_field = new Field2d();
-
-    // creates the odometry class
-    public SwerveDrivePoseEstimator odometry;
-
-    // initialize the gyro
+    private final SwerveDrivePoseEstimator odometry;
     private final AHRS gyro = new AHRS(SPI.Port.kMXP);
-    private double gyroAngle;
-
-
-    public double tickStart;
-    public ChassisSpeeds latestChassisSpeeds = new ChassisSpeeds(0, 0, 0);
 
     public SwerveSubsystem() {
 
+        // Holds all the modules
+        modules = new SwerveModule[4];
+
         // Creating the swerve modules
-        frontRight = new SwerveModule(Constants.Swerve.FRONT_RIGHT_DRIVE_ID, Constants.Swerve.FRONT_RIGHT_TURN_ID, Constants.Swerve.FRONT_RIGHT_ABS_ENCODER_OFFSET, Constants.Swerve.FRONT_RIGHT_CANCODER_ID);
-        frontLeft = new SwerveModule(Constants.Swerve.FRONT_LEFT_DRIVE_ID, Constants.Swerve.FRONT_LEFT_TURN_ID, Constants.Swerve.FRONT_LEFT_ABS_ENCODER_OFFSET, Constants.Swerve.FRONT_LEFT_CANCODER_ID);
-        bottomLeft = new SwerveModule(Constants.Swerve.BACK_LEFT_DRIVE_ID, Constants.Swerve.BACK_LEFT_TURN_ID, Constants.Swerve.BACK_LEFT_ABS_ENCODER_OFFSET, Constants.Swerve.BACK_LEFT_CANCODER_ID);
-        bottomRight = new SwerveModule(Constants.Swerve.BACK_RIGHT_DRIVE_ID, Constants.Swerve.BACK_RIGHT_TURN_ID, Constants.Swerve.BACK_RIGHT_ABS_ENCODER_OFFSET, Constants.Swerve.BACK_RIGHT_CANCODER_ID);
+        frontRight = new SwerveModule(Constants.Swerve.FRONT_RIGHT_DRIVE_ID, Constants.Swerve.FRONT_RIGHT_TURN_ID, Constants.Swerve.FRONT_RIGHT_ABS_ENCODER_OFFSET, Constants.Swerve.FRONT_RIGHT_CANCODER_ID, 0);
+        frontLeft = new SwerveModule(Constants.Swerve.FRONT_LEFT_DRIVE_ID, Constants.Swerve.FRONT_LEFT_TURN_ID, Constants.Swerve.FRONT_LEFT_ABS_ENCODER_OFFSET, Constants.Swerve.FRONT_LEFT_CANCODER_ID, 1);
+        bottomLeft = new SwerveModule(Constants.Swerve.BACK_LEFT_DRIVE_ID, Constants.Swerve.BACK_LEFT_TURN_ID, Constants.Swerve.BACK_LEFT_ABS_ENCODER_OFFSET, Constants.Swerve.BACK_LEFT_CANCODER_ID, 2);
+        bottomRight = new SwerveModule(Constants.Swerve.BACK_RIGHT_DRIVE_ID, Constants.Swerve.BACK_RIGHT_TURN_ID, Constants.Swerve.BACK_RIGHT_ABS_ENCODER_OFFSET, Constants.Swerve.BACK_RIGHT_CANCODER_ID, 3);
 
-        SwerveDriveKinematics driveKinematics = Constants.Swerve.kDriveKinematics;
-        odometry = new SwerveDrivePoseEstimator(driveKinematics, new Rotation2d(getHeading()),
-                new SwerveModulePosition[] { frontRight.getPosition(), frontLeft.getPosition(),
-                        bottomLeft.getPosition(), bottomRight.getPosition() }, new Pose2d());
+        modules[0] = frontRight;
+        modules[1] = frontLeft;
+        modules[2] = bottomLeft;
+        modules[3] = bottomRight;
 
-        tickStart = 0;
+        odometry = new SwerveDrivePoseEstimator
+                        (
+                            Constants.Swerve.kDriveKinematics, 
+                            getGyroHeading(),
+                            getModulePositions(), 
+                            new Pose2d()
+                        );
 
+        
+        initAutoBuilder();
+        initSwerve();
 
         SmartDashboard.putData("field", m_field);
+    }
 
-        // jpk add:
-        setRelativeTurnEncoderValue();  // sync the relative encoders (falcons) with the absolute encoders (cancoders)
-
-        // Configure the AutoBuilder last
-        AutoBuilder.configureHolonomic(
-            this::getPose, // Robot pose supplier
-            this::resetOdometry, // Method to reset odometry (will be called if your auto has a starting pose)
-            this::getLatestChassisSpeed, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-            this::driveSwerve, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
-            new HolonomicPathFollowerConfig( // HolonomicPathFollowerConfig, this should likely live in your Constants class
-                new PIDConstants(3.0, 0.0, 0), // Translation PID constants
-                new PIDConstants(1.0, 0.0, 0.0), // Rotation PID constants
-                Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS, // Max module speed, in m/s
-                0.3, // Drive base radius in meters. Distance from robot center to furthest module.
-                new ReplanningConfig(false, true) // Default path replanning config. See the API for the options here
-            ),
-            this::isFlipped,
-        this // Reference to this subsystem to set requirements
-    );
-
-        // resets the gyro, it is calibrating when this code is reached so we reset it
-        // on a different thread with a delay
+    /*
+     * Sets the gyro at the beginning of the match and 
+     * also sets each module state to present
+     */
+    public void initSwerve(){
+        setRelativeTurnEncoderValues();
         new Thread(() -> {
             try {
                 Thread.sleep(1000);
-                gyro.reset();
-                gyro.setAngleAdjustment(180);
-                setRelativeTurnEncoderValue();
+                setGyro(180);
+                setRelativeTurnEncoderValues();
             } catch (Exception e) {
             }
         }).start();
     }
 
-    // Sets the gyro heading to 0
-    // Sets the relative encoders with the absolute encoders
+    /*
+     * Initializes autobuilder,
+     * this is used by pathplanner
+     */
+    public void initAutoBuilder(){
+        // Configure the AutoBuilder last
+        AutoBuilder.configureHolonomic(
+                this::getPose, // Robot pose supplier
+                this::resetOdometry, // Method to reset odometry (will be called if your auto has a starting pose)
+                this::getLatestChassisSpeed, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+                this::driveSwerve, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
+                new HolonomicPathFollowerConfig( // HolonomicPathFollowerConfig, this should likely live in your Constants class
+                    new PIDConstants(3.0, 0.0, 0), // Translation PID constants
+                    new PIDConstants(1.0, 0.0, 0.0), // Rotation PID constants
+                    Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS, // Max module speed, in m/s
+                    0.3, // Drive base radius in meters. Distance from robot center to furthest module.
+                    new ReplanningConfig(false, true) // Default path replanning config. See the API for the options here
+                ),
+                this::isFlipped,
+            this // Reference to this subsystem to set requirements
+        );
+    }
+
+    /*
+     * This method sets the gyro to 0 degrees
+     * This method also sets the relative encoders on the swerve modules using the absolute encoders
+     */
     public Command resetSwerve() {
         return runOnce(
             ()-> 
                 {
-                    gyro.reset();
-                    gyro.setAngleAdjustment(0);
-                    setRelativeTurnEncoderValue();
+                    setGyro(0);
+                    setRelativeTurnEncoderValues();
                 }
         );
     }
 
-    //getPitch is used for balancing the robot on the charge station
-    public double getPitch() {
-        return gyro.getPitch();
-    }
 
-    public void setGyro(double val){
+    /*
+     * This sets the gyro to a given angle,
+     * it does this by resetting the gyro and then giving it an offset
+     */
+    public void setGyro(double degrees){
         gyro.reset();
-        gyro.setAngleAdjustment(val);
+        gyro.setAngleAdjustment(degrees);
     }
 
-    //getHeading returns the direction the robot is facing
-    //assumes we have already reset the gyro
-    public double getHeading() {
-        gyroAngle = Math.IEEEremainder(gyro.getAngle(), 360);
-
-        return gyroAngle * -1; // Multiply by negative one because on wpilib as you go counterclockwise angles
-                          // should get bigger
+    /*
+     * getGyroHeading returns the angle the gyro is facing expressed as a Rotation2d
+     */
+    public Rotation2d getGyroHeading() {
+        double gyroAngle = Math.IEEEremainder(gyro.getAngle(), 360);
+        return new Rotation2d(gyroAngle * -Math.PI/180);
     }
 
-    //tells pathplanner if it should flip the paths or not, this is dependant on what aliance we are on and also what game we are playing
+    /*
+     * isFlipped returns true if we are red alliance and returns false if we are blue alliance
+     */
     private boolean isFlipped(){
         var alliance = DriverStation.getAlliance();
               if (alliance.isPresent()) {
@@ -143,236 +150,133 @@ public class SwerveSubsystem extends SubsystemBase {
         return false;
     }
 
-    //Outdated method for using pure odometry to make autons
-    public void startTickCount() {
-        tickStart = frontLeft.getDriveTicks();
-    }
-
-    //Outdated method for using pure odometry to make autons
-    public double getTicks() {
-        return Math.abs(frontLeft.getDriveTicks() - tickStart);
-    }
-
-    //Gets the pose of the robot from the odometry, used in any self driving periods
+    /*
+     * returns the pose the odometry is currently reading
+     */
     public Pose2d getPose() {
         return odometry.getEstimatedPosition();
     }
 
-    //Sets all of the swerve modules
+    /*
+     * Sets all the swerve modules to the states we want them to be in
+     */
     public void setModules(SwerveModuleState[] desiredStates) {
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS);
 
-        /*
-        SmartDashboard.putString("SWERVE M STATE FR", desiredStates[0].toString());
-        SmartDashboard.putString("SWERVE M STATE FL", desiredStates[1].toString());
-        SmartDashboard.putString("SWERVE M STATE BL", desiredStates[2].toString());
-        SmartDashboard.putString("SWERVE M STATE BR", desiredStates[3].toString());
-        */
-
-        frontRight.setDesiredState(desiredStates[0], 1);
-        frontLeft.setDesiredState(desiredStates[1], 2);
-        bottomLeft.setDesiredState(desiredStates[2], 3);
-        bottomRight.setDesiredState(desiredStates[3], 4);
+        for(SwerveModule module : modules){
+            module.setDesiredState(desiredStates[module.index]);
+        }
         
     }
 
-    //returns the position of each swerve module (check SwerveModule.java for further details)
-    public SwerveModulePosition getModulePosition(int motor) {
-        switch (motor) {
-            case 1:
-                return frontRight.getPosition();
-            case 2:
-                return frontLeft.getPosition();
-            case 3:
-                return bottomLeft.getPosition();
-            case 4:
-                return bottomRight.getPosition();
-            default:
-                return bottomLeft.getPosition();
+    /*
+     * returns the position of each swerve module (check SwerveModule.java for further details)
+     */
+    public SwerveModulePosition[] getModulePositions() {
+
+        SwerveModulePosition[] modulePositions = new SwerveModulePosition[4];
+
+        for(SwerveModule module : modules){
+            modulePositions[module.index] = module.getPosition();
+        }
+
+        return modulePositions;
+    }
+    /*
+     * zeroes the drive motor encoders (check SwerveModule.java for further details)
+     */
+    public void zeroDriveMotorEncoders(){
+        for(SwerveModule module : modules){
+            module.zeroDrivePosition();
         }
     }
 
-    //Gets the position of the wheel as returned by the absolute encoder (check SwerveModule.java for further details)
-    public double getAbsoluteEncoderValue(int motor) {
+    /*
+     * Uses the absolute encoders (cancoders) to set the relative encoders within each swerve module
+     */
+    public void setRelativeTurnEncoderValues() {
 
-        switch (motor) {
-            case 1:
-                return frontRight.getAbsoluteEncoderRadians();
-            case 2:
-                return frontLeft.getAbsoluteEncoderRadians();
-            case 3:
-                return bottomLeft.getAbsoluteEncoderRadians();
-            case 4:
-                return bottomRight.getAbsoluteEncoderRadians();
-            default:
-                return -1;
-        }
-    }
-
-    //Gets the swerve module state of the motor (check SwerveModule.java for further details)
-    public SwerveModuleState getState(int motor) {
-        switch (motor) {
-            case 1:
-                return frontRight.getState();
-            case 2:
-                return frontLeft.getState();
-            case 3:
-                return bottomLeft.getState();
-            case 4:
-                return bottomRight.getState();
-            default:
-                return bottomRight.getState(); // just bcs I need a default
-        }
-    }
-
-    //Gets the relative encoder position of each swerve module (check SwerveModule.java for further details)
-    public double getRelativeTurnEncoderValue(int motor) {
-
-        /*
-        SmartDashboard.putNumber("FRONT LEFT MOTOR POSITION", frontLeft.getTurnPosition(true));
-        SmartDashboard.putNumber("FRONT RIGHT MOTOR POSITION", frontRight.getTurnPosition(true));
-        SmartDashboard.putNumber("BACK LEFT MOTOR POSITION", bottomLeft.getTurnPosition(true));
-        SmartDashboard.putNumber("BACK RIGHT MOTOR POSITION", bottomRight.getTurnPosition(true));
-        */
-
-        switch (motor) {
-            case 1:
-                return frontRight.getTurnPosition(false);
-            case 2:
-                return frontLeft.getTurnPosition(false);
-            case 3:
-                return bottomLeft.getTurnPosition(false);
-            case 4:
-                return bottomRight.getTurnPosition(false);
-            default:
-                return -1;
-        }
-    }
-
-    // resets the drive motors (check SwerveModule.java for further details)
-    public void resetDriveMotorEncoders(){
-        frontRight.zeroDrivePosition();
-        frontLeft.zeroDrivePosition();
-        bottomLeft.zeroDrivePosition();
-        bottomRight.zeroDrivePosition();
-    }
-
-    //Sets the relative encoder value using the absolute encoders (check SwerveModule.java for further details)
-    public void setRelativeTurnEncoderValue() {
-        frontRight.setTurnEncoder(frontRight.getAbsoluteEncoderRadians());
-        frontLeft.setTurnEncoder(frontLeft.getAbsoluteEncoderRadians());
-        bottomLeft.setTurnEncoder(bottomLeft.getAbsoluteEncoderRadians());
-        bottomRight.setTurnEncoder(bottomRight.getAbsoluteEncoderRadians());
-    }
-
-    //periodic updates the odometry object
-    @Override
-    public void periodic() {
-        // SmartDashboard.putNumber("FRONT LEFT MOTOR POSITION ABS", frontLeft.getAbsoluteEncoderRadians() * 180/Math.PI);
-        // SmartDashboard.putNumber("FRONT RIGHT MOTOR POSITION ABS", frontRight.getAbsoluteEncoderRadians() * 180/Math.PI);
-        // SmartDashboard.putNumber("BACK LEFT MOTOR POSITION ABS", bottomLeft.getAbsoluteEncoderRadians() * 180/Math.PI);
-        // SmartDashboard.putNumber("BACK RIGHT MOTOR POSITION ABS", bottomRight.getAbsoluteEncoderRadians() * 180/Math.PI);
-
-        // SmartDashboard.putNumber("FRONT LEFT MOTOR CANCODER", frontLeft.getRawCancoder());
-        // SmartDashboard.putNumber("FRONT RIGHT MOTOR CANCODER", frontRight.getRawCancoder());
-        // SmartDashboard.putNumber("BACK LEFT MOTOR CANCODER", bottomLeft.getRawCancoder());
-        // SmartDashboard.putNumber("BACK RIGHT MOTOR CANCODER", bottomRight.getRawCancoder());
-
-        // SmartDashboard.putNumber("FRONT LEFT MOTOR POSITION", frontLeft.getTurnPosition(true));
-        // SmartDashboard.putNumber("FRONT RIGHT MOTOR POSITION", frontRight.getTurnPosition(true));
-        // SmartDashboard.putNumber("BACK LEFT MOTOR POSITION", bottomLeft.getTurnPosition(true));
-        // SmartDashboard.putNumber("BACK RIGHT MOTOR POSITION", bottomRight.getTurnPosition(true));
-
-        // SmartDashboard.putString("SWERVE M STATE FR", desiredStates[0].toString());
-        // SmartDashboard.putString("SWERVE M STATE FL", desiredStates[1].toString());
-        // SmartDashboard.putString("SWERVE M STATE BL", desiredStates[2].toString());
-        // SmartDashboard.putString("SWERVE M STATE BR", desiredStates[3].toString());
-
-
-        if(LimelightHelpers.getLatestResults("").targetingResults.targets_Fiducials.length >= 2){
-            //gets the total latency from the limelight
-            double latency =  0.001 * (LimelightHelpers.getLatency_Capture("") + LimelightHelpers.getLatency_Pipeline(""));
-            //double tx = LimelightHelpers.getTX("");
-            SmartDashboard.putNumber("Latency", latency);
-
-            // If the result was not grabbed from the peripherals of the limelight FOV
-            //odometry.addVisionMeasurement(LimelightHelpers.getBotPose2d_wpiBlue(""), Timer.getFPGATimestamp() - latency);
+        for(SwerveModule module : modules){
+            module.setTurnEncoder(module.getAbsoluteEncoderRadians());
         }
 
-        odometry.update( new Rotation2d(getHeading() * Math.PI / 180),
-                new SwerveModulePosition[] { frontRight.getPosition(), frontLeft.getPosition(),
-                        bottomLeft.getPosition(), bottomRight.getPosition() });
-        m_field.setRobotPose(getPose());
-
-        SmartDashboard.putNumber("gyro", getHeading());
-        SmartDashboard.putString("Robot Pose", odometry.getEstimatedPosition().toString());
     }
 
-    //Allows us to manually reset the odometery, used with vision pose estimation
+    /*
+     * Manually resets the odometry to a given pose
+     */
     public void resetOdometry(Pose2d pose) {
-        // gyro.reset();
-        // gyro.setAngleAdjustment(pose.getRotation().getDegrees());
-
         SmartDashboard.putString("adjustment", pose.toString());
         odometry.resetPosition(
-                new Rotation2d( (Math.PI / 180) * getHeading()),
-                new SwerveModulePosition[] {
-                        frontRight.getPosition(),
-                        frontLeft.getPosition(),
-                        bottomLeft.getPosition(),
-                        bottomRight.getPosition()
-                },
+                getGyroHeading(),
+                getModulePositions(),
                 pose);
-
     }
 
-    // Stops all of the swerve modules
+    /*
+     * Stops all of the swerve modules
+     */
     public void stopModules() {
-        frontRight.stop();
-        frontLeft.stop();
-        bottomLeft.stop();
-        bottomRight.stop();
+        for(SwerveModule module : modules){
+            module.stop();
+        }
     }
 
-    // Drives from current location to specified pose
-    public Command goToLocation(Pose2d finalpose){
+    /*
+     * Returns the state of each swerve module
+     */
+    public SwerveModuleState[] getModuleStates(){
+        SwerveModuleState[] states = new SwerveModuleState[4];
 
-        Pose2d currentPose = getPose();
-        
-        // Create a list of bezier points from poses. Each pose represents one waypoint. 
-        // The rotation component of the pose should be the direction of travel. Do not use holonomic rotation.
-        List<Translation2d> bezierPoints = PathPlannerPath.bezierFromPoses(
-            new Pose2d(currentPose.getX(), currentPose.getY(), Rotation2d.fromRadians(Math.atan((Math.abs(currentPose.getY()-finalpose.getY())/(Math.abs(currentPose.getX()-currentPose.getY())))))),
-            new Pose2d(finalpose.getX(), finalpose.getY(), Rotation2d.fromDegrees(finalpose.getRotation().getDegrees()))
-        );
+        for(SwerveModule module : modules){
+            states[module.index] = module.getState();
+        }
 
-        // Create the path using the bezier points created above
-        PathPlannerPath path = new PathPlannerPath(
-            bezierPoints,
-            new PathConstraints(Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS, 3.0, Constants.Swerve.MAX_VELOCITY_RADIANS_PER_SECOND, Constants.Swerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED), // The constraints for this path. If using a differential drivetrain, the angular constraints have no effect.
-            new GoalEndState(0.0, Rotation2d.fromDegrees(90)) // Goal end state. You can set a holonomic rotation here. If using a differential drivetrain, the rotation will have no effect.
-        );
-
-        return AutoBuilder.followPath(path);
+        return states;
     }
 
+    /*
+     * Returns the current chassis speeds of the robot, 
+     * used with pathplanner
+     */
     public ChassisSpeeds getLatestChassisSpeed(){
-        return latestChassisSpeeds;
+        return Constants.Swerve.kDriveKinematics.toChassisSpeeds(getModuleStates());
     }
 
-    // method that actually drives swerve
+    /*
+     * Drives swerve given chassis speeds
+     */
     public void driveSwerve(ChassisSpeeds chassisSpeeds) {
-        // discretizes the chassis speeds (acccounts for robot skew) The timestamp should be the time 
-        // between each execute in the command is called.
+        // discretizes the chassis speeds (acccounts for robot skew)
         chassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, Constants.Swerve.DISCRETIZE_TIMESTAMP);
-
-        latestChassisSpeeds = chassisSpeeds;
 
         // convert chassis speeds to module states
         SwerveModuleState[] moduleStates = Constants.Swerve.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
 
         // set the modules to their desired speeds
         setModules(moduleStates);
+    }
+
+
+    @Override
+    public void periodic() {
+
+        if(LimelightHelpers.getLatestResults("").targetingResults.targets_Fiducials.length >= 2){
+            double latency =  0.001 * (LimelightHelpers.getLatency_Capture("") + LimelightHelpers.getLatency_Pipeline(""));
+            SmartDashboard.putNumber("Latency", latency);
+
+            // If the result was not grabbed from the peripherals of the limelight FOV
+            //odometry.addVisionMeasurement(LimelightHelpers.getBotPose2d_wpiBlue(""), Timer.getFPGATimestamp() - latency);
+        }
+
+        odometry.update( 
+            getGyroHeading(),
+            getModulePositions());
+
+        m_field.setRobotPose(getPose());
+
+        SmartDashboard.putNumber("gyro", getGyroHeading().getDegrees());
+        SmartDashboard.putString("Robot Pose", odometry.getEstimatedPosition().toString());
     }
 
 }

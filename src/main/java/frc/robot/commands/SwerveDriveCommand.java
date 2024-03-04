@@ -5,7 +5,6 @@
 package frc.robot.commands;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -69,7 +68,7 @@ public class SwerveDriveCommand extends Command {
     // construct chassis speeds
     ChassisSpeeds chassisSpeeds;
     if (fieldOriented) {
-        chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(Yj, Xj, Zj, Rotation2d.fromDegrees(m_Subsystem.getHeading()));
+        chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(Yj, Xj, Zj, m_Subsystem.getGyroHeading());
     } else {
         chassisSpeeds = new ChassisSpeeds(Yj, Xj, Zj);
     }
