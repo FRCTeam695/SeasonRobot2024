@@ -9,6 +9,7 @@ import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.ClimberSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.LEDSubsystem;
+import frc.robot.subsystems.ScoringLocation;
 import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
 import edu.wpi.first.math.MathUtil;
@@ -59,9 +60,10 @@ public class RobotContainer {
 
   private final JoystickButton y_Button = new JoystickButton(controller, 4);
   private final JoystickButton left_Bumper = new JoystickButton(controller, 5);
+  private final JoystickButton y_Button_Climber = new JoystickButton(climberController, 4);
   private final JoystickButton right_Bumper = new JoystickButton(controller, 6);
   private final JoystickButton right_Bumper_Climber = new JoystickButton(climberController, 6);
-  private final JoystickButton amplify_Button = new JoystickButton(climberController, 1);
+  private final JoystickButton amplify_Button_Climber = new JoystickButton(climberController, 1);
 
   //Network Table Stuff
   // private NetworkTableInstance inst = NetworkTableInstance.getDefault();
@@ -73,6 +75,7 @@ public class RobotContainer {
   private final DoubleSupplier left_yAxis = () -> (controller.getRawAxis(1));
   private final DoubleSupplier right_xAxis = () -> (controller.getRawAxis(4));
   private final DoubleSupplier right_Trigger = () -> (controller.getRawAxis(3));
+  private final DoubleSupplier right_Trigger_Climber = () -> (climberController.getRawAxis(3));
   private final DoubleSupplier climberController_y1 = () -> MathUtil.applyDeadband(climberController.getRawAxis(1), 0.05);
   private final DoubleSupplier climberController_y2 = ()-> MathUtil.applyDeadband(climberController.getRawAxis(5), 0.05);
 
@@ -85,6 +88,7 @@ public class RobotContainer {
 
   // Triggers
   private final Trigger shoot_Trigger = new Trigger(()-> (right_Trigger.getAsDouble() > .60));
+  private final Trigger podium_shot_Trigger = new Trigger(() -> (right_Trigger_Climber.getAsDouble() > .60) );
 
   private final SendableChooser<Command> autoChooser;
   private final SendableChooser<Integer> offsetChooser = new SendableChooser<>();
@@ -119,13 +123,20 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
-    //b_Button.onTrue(sausageNote());
-    // right_Bumper.onTrue(
-    //   sausageToBeamBreak()
-    //   .andThen(
-    //   flickToAmp())
+    // y_Button_Climber.onTrue(
+    //   armToPosition(Math.toRadians(41))
+    //   .andThen(shoot(3000))
+    //   .withTimeout(2)
     // );
-    //left_Bumper.onTrue(sausageToBeamBreak());
+
+    y_Button_Climber.onTrue(armToPosition(Constants.Arm.AMP_SCORE_RADIANS)
+                            .andThen(shoot(1000))
+                            .withTimeout(2));
+    
+
+    podium_shot_Trigger.onTrue(podiumShotCommand());
+
+
     /*
      * LEFT BUMPER BINDING:
      * 
@@ -207,7 +218,7 @@ public class RobotContainer {
      * Gives an LED signal to amplify the speaker
      * If we have already given the signal, if pressed again will turn the signal off
      */
-    amplify_Button.onTrue(amplifyButtonCommand());
+    amplify_Button_Climber.onTrue(amplifyButtonCommand());
 
     /*
      * Y BUTTON BINDING:
@@ -494,7 +505,7 @@ public class RobotContainer {
   }
 
   public void setGyroOffset(){
-    double val = offsetChooser.getSelected();
+    double val = 50;
     m_SwerveSubsystem.setGyro(val);
   }
 
@@ -529,6 +540,9 @@ public class RobotContainer {
     //return startingAuton();
     return autoChooser.getSelected();
     //return new WaitCommand(1);
+  }
+  public Command podiumShotCommand() {
+    return m_SwerveSubsystem.driveToPose(Constants.Feild.Blue.PODIUM_SCORING_LOCATION.getPose());
   }
 
   // public Trajectory mid_to_2(){

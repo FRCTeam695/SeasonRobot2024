@@ -3,13 +3,19 @@ package frc.robot;
 import java.util.HashMap;
 import java.util.Map;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import frc.robot.subsystems.ScoringLocation;
 
 public final class Constants {
 
@@ -34,6 +40,8 @@ public final class Constants {
             isMK4i  (1 means it is MK4i, 0 means its not) [15]
         }
          */
+
+         /* 2DO - Make this another constants class instead of an array */
         public static final double[] GOLDMODULE_CONSTANTS = { 338, 107, 311, 29, 5.70, 15.82, 15.82, 4 * Math.PI, 0.015,
                 1, 6.35, 21.5, 24.5, Math.PI, 150.0 / 7, 1 };
         public static final double[] QB_CONSTANTS = { 351, 229, 169, 207, 8.14, 10.9, 10.9, 4 * Math.PI, 0.015, 
@@ -65,7 +73,7 @@ public final class Constants {
         public static final double PROFILED_KP_VALUE = CHOSEN_CONSTANTS[9];
         public static final double MAX_VELOCITY_RADIANS_PER_SECOND = CHOSEN_CONSTANTS[10];
         public static final double MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED = CHOSEN_CONSTANTS[13];
-        public static final double DISCRETIZE_TIMESTAMP = 0.02;
+        public static final double DISCRETIZE_TIMESTAMP = 0.03;
         public static final double isMK4i = CHOSEN_CONSTANTS[15];
 
         // front right wheel
@@ -153,7 +161,7 @@ public final class Constants {
         public static final double STOCKPILE_POSITION_RADIANS = 0.3;
         public static final double INTAKE_POSITION_RADIANS = 0.99;
         public static final double SHOOT_POSITION_RADIANS = 1.05;
-        public static final double AMP_SCORE_RADIANS = 2.0;//Math.toRadians(116.5);//2.08;
+        public static final double AMP_SCORE_RADIANS = Math.toRadians(120);//Math.toRadians(116.5);//2.08;
         public static final double FENDER_SHOT_POSITION_RADIANS = 0;
 
         public static final double MAX_POSITION_RADIANS = 2.17;
@@ -170,14 +178,28 @@ public final class Constants {
         public static final int CLIMBER_MOTOR_ID_2 = 56;
     }
 
+    public static class Vision {
+        //public static final Transform3d robotToCamera = new Transform3d(Units.inchesToMeters(13.5), 0, Units.inchesToMeters(9.5), new Rotation3d(0, Math.toRadians(-65), 0));
+                public static final Transform3d robotToCamera = new Transform3d(
+                Units.inchesToMeters(0), //x
+                0, //y
+                Units.inchesToMeters(0), //z
+                new Rotation3d(0,
+                 Math.toRadians(-65), 
+                 0));
+
+    }
+
     public static class Feild{
 
+        public static final AprilTagFieldLayout APRIL_TAG_FIELD_LAYOUT = AprilTagFields.k2024Crescendo.loadAprilTagLayoutField();
+
         public static class Red{
-            
+            public static final ScoringLocation PODIUM_SCORING_LOCATION = new ScoringLocation(new Pose2d(14.64, 5.77, new Rotation2d(0.0)), 0, 0);
         }
 
         public static class Blue{
-
+            public static final ScoringLocation PODIUM_SCORING_LOCATION = new ScoringLocation(new Pose2d(), 0, 0);
         }
     }
 }

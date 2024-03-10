@@ -139,7 +139,7 @@ public class SwerveModule{
      * Gets the value of the absolute encoder in radians
      */
     public double getAbsoluteEncoderRadians() {
-        double raw_val = absoluteEncoder.getAbsolutePosition() - absoluteEncoderOffset;
+        double raw_val = getRawCancoder() - absoluteEncoderOffset;
 
         //Binds the value between -180 and 180 degrees
         while (raw_val > 180) {
@@ -185,6 +185,8 @@ public class SwerveModule{
 
     /*
      * Sets the module to a given state
+     * 
+     * 2DO - Use feedforward and PID controller on drive + turn motors
      */
     public void setDesiredState(SwerveModuleState state) {
         if (Math.abs(state.speedMetersPerSecond) < 0.1){

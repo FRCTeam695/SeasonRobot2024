@@ -12,7 +12,7 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+// import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
@@ -92,23 +92,23 @@ public class ArmSubsystem extends SubsystemBase {
 
     double feedforwardOutput = -1 * m_feedForward.calculate(getAbsolutePosition(), velocity, acceleration);
 
-    SmartDashboard.putNumber("PID OUTPUT", pidOutput);
-    SmartDashboard.putNumber("FEEDFORWARD OUTPUT", feedforwardOutput);
-    SmartDashboard.putNumber("SETPOINT", m_controller.getSetpoint().position);
-    SmartDashboard.putNumber("GOAL", m_controller.getGoal().position);
+    // SmartDashboard.putNumber("PID OUTPUT", pidOutput);
+    // SmartDashboard.putNumber("FEEDFORWARD OUTPUT", feedforwardOutput);
+    // SmartDashboard.putNumber("SETPOINT", m_controller.getSetpoint().position);
+    // SmartDashboard.putNumber("GOAL", m_controller.getGoal().position);
 
     m_pitchControlMotor.set(pidOutput + feedforwardOutput);
 
     prevGoalVelocity = velocity;
 
-    SmartDashboard.putNumber("ARM MOTOR OUTPUT", pidOutput + feedforwardOutput);
+    // SmartDashboard.putNumber("ARM MOTOR OUTPUT", pidOutput + feedforwardOutput);
   }
   
   @Override
   public void periodic(){
-    SmartDashboard.putNumber("ARM ENCODER POSITION", getAbsolutePosition());
-    SmartDashboard.putBoolean("AT GOAL", atGoal());
-    SmartDashboard.putNumber("ARM ENCODER RAW", m_encoder.getAbsolutePosition());
+    // SmartDashboard.putNumber("ARM ENCODER POSITION", getAbsolutePosition());
+    // SmartDashboard.putBoolean("AT GOAL", atGoal());
+    // SmartDashboard.putNumber("ARM ENCODER RAW", m_encoder.getAbsolutePosition());
 
     if(goal == 0){
       goal = getAbsolutePosition();

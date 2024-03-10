@@ -50,6 +50,11 @@ public class SwerveDriveCommand extends Command {
     Double Yj = -1 * ySpeed.getAsDouble(); //The controller is inverted
     Double Zj = -1 * turningSpeed.getAsDouble(); //Inverted because WPIlib coordinate system is weird, link to docs below
 
+    if(m_Subsystem.isFlipped()){
+      Xj *= -1;
+      Yj *= -1;
+    }
+
     // JPK:  scaled deadband
     double db = 0.2;
     Xj = MathUtil.applyDeadband(Xj, db);

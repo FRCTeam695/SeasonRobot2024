@@ -262,8 +262,8 @@ public class ShooterSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    SmartDashboard.putNumber("Position 2", shooterNeoEncoder2.getPosition());
-    SmartDashboard.putNumber("Position 1", shooterNeoEncoder1.getPosition());
+    //SmartDashboard.putNumber("Position 2", shooterNeoEncoder2.getPosition());
+    //SmartDashboard.putNumber("Position 1", shooterNeoEncoder1.getPosition());
   }
 
   @Override

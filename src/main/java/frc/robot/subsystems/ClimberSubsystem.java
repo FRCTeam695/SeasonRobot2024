@@ -23,10 +23,12 @@ public class ClimberSubsystem extends SubsystemBase {
   private CANSparkMax climberMotor2;
   private RelativeEncoder encoder1;
   private RelativeEncoder encoder2;
-  private float stringLengthLimit;
+  private float stringLengthLimit1;
+  private float stringLengthLimit2;
 
   public ClimberSubsystem() {
-    stringLengthLimit = 12;
+    stringLengthLimit1 = (float)6.6;
+    stringLengthLimit2 = (float)6.6;
 
     climberMotor1 = new CANSparkMax(Constants.Climber.CLIMBER_MOTOR_ID_1, MotorType.kBrushless);
     climberMotor2 = new CANSparkMax(Constants.Climber.CLIMBER_MOTOR_ID_2, MotorType.kBrushless);
@@ -41,20 +43,20 @@ public class ClimberSubsystem extends SubsystemBase {
     climberMotor1.setIdleMode(IdleMode.kBrake);
     climberMotor2.setIdleMode(IdleMode.kBrake);
 
-    setClimberMotorsSoftLimit(stringLengthLimit);
+    setClimberMotorsSoftLimit(stringLengthLimit1, stringLengthLimit2);
   }
 
-  public void setClimberMotorsSoftLimit(float limit){
+  public void setClimberMotorsSoftLimit(float limit1, float limit2){
     encoder1.setPosition(0);
     encoder2.setPosition(0);
 
     enableSoftLimits(true);
 
-    climberMotor2.setSoftLimit(SoftLimitDirection.kForward, limit);
+    climberMotor2.setSoftLimit(SoftLimitDirection.kForward, limit2);
     climberMotor2.setSoftLimit(SoftLimitDirection.kReverse, 0);
 
     climberMotor1.setSoftLimit(SoftLimitDirection.kForward, 0);
-    climberMotor1.setSoftLimit(SoftLimitDirection.kReverse, -limit);
+    climberMotor1.setSoftLimit(SoftLimitDirection.kReverse, -limit1);
   }
 
   public void enableSoftLimits(boolean toEnable){
@@ -66,7 +68,7 @@ public class ClimberSubsystem extends SubsystemBase {
 
   public Command resetClimberMotorSoftLimit(){
     return runOnce(
-      ()-> setClimberMotorsSoftLimit(stringLengthLimit)
+      ()-> setClimberMotorsSoftLimit(stringLengthLimit1, stringLengthLimit2)
     );
   }
 
@@ -77,13 +79,20 @@ public class ClimberSubsystem extends SubsystemBase {
   public Command softLimitOverrideSlow(DoubleSupplier supplier1, DoubleSupplier supplier2){
     return 
     new FunctionalCommand(
-      ()-> turnOffSoftLimits(), 
+      /*  INIT  */
+      ()-> turnOffSoftLimits(),
+      
+      /* EXECUTE */
       ()-> 
             {
-              climberMotor1.set(0.1 * supplier1.getAsDouble());
-              climberMotor2.set(-0.1 * supplier2.getAsDouble());
+              climberMotor1.set(0.25 * supplier1.getAsDouble());
+              climberMotor2.set(-0.25 * supplier2.getAsDouble());
             }, 
-      interrupted-> setClimberMotorsSoftLimit(stringLengthLimit), 
+      
+      /* END */
+      interrupted-> setClimberMotorsSoftLimit(stringLengthLimit1, stringLengthLimit2), 
+
+      /* END CONDITION */
       ()-> false, 
       this);
     // .andThen(

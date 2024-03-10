@@ -3,25 +3,41 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 2.77,
-        "y": 4.09
+        "x": 0.67,
+        "y": 4.52
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.1664775991090464,
-        "y": 4.232785408647741
+        "x": 1.9356792559738978,
+        "y": 3.127820871026358
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 0.67,
-        "y": 4.52
+        "x": 4.4813505011625425,
+        "y": 1.4800414216213047
       },
       "prevControl": {
-        "x": 0.9561413415134526,
-        "y": 4.411463629081104
+        "x": 3.123706851169162,
+        "y": 1.8891943024412259
+      },
+      "nextControl": {
+        "x": 5.921924151540613,
+        "y": 1.0458959379457238
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 8.151853226783379,
+        "y": 0.7696215392430785
+      },
+      "prevControl": {
+        "x": 7.105957288837657,
+        "y": 0.9077587385943988
       },
       "nextControl": null,
       "isLocked": false,
@@ -32,8 +48,8 @@
   "constraintZones": [],
   "eventMarkers": [
     {
-      "name": "Move Arm",
-      "waypointRelativePos": 0.35,
+      "name": "Intake",
+      "waypointRelativePos": 1.5,
       "command": {
         "type": "parallel",
         "data": {
@@ -41,7 +57,7 @@
             {
               "type": "named",
               "data": {
-                "name": "Shoot Position"
+                "name": "Intake Note"
               }
             }
           ]
@@ -57,13 +73,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 120.0,
+    "rotation": 180.0,
     "rotateFast": false
   },
   "reversed": false,
   "folder": null,
   "previewStartingState": {
-    "rotation": 180.0,
+    "rotation": 120.0,
     "velocity": 0
   },
   "useDefaultConstraints": true

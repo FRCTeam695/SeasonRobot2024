@@ -3,11 +3,17 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.LimelightHelpers;
 
+import java.util.Optional;
+
+import org.photonvision.EstimatedRobotPose;
+import org.photonvision.PhotonCamera;
+import org.photonvision.PhotonPoseEstimator;
+import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 
 import com.kauailabs.navx.frc.AHRS;
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.ReplanningConfig;
@@ -33,6 +39,9 @@ public class SwerveSubsystem extends SubsystemBase {
     private final SwerveModule bottomLeft;
     private final SwerveModule bottomRight;
 
+    private final PhotonCamera camera;
+    private final PhotonPoseEstimator photonPoseEstimator;
+
     private final Field2d m_field = new Field2d();
     private final SwerveDrivePoseEstimator odometry;
     private final AHRS gyro = new AHRS(SPI.Port.kMXP);
@@ -53,6 +62,14 @@ public class SwerveSubsystem extends SubsystemBase {
         modules[2] = bottomLeft;
         modules[3] = bottomRight;
 
+        camera = new PhotonCamera("Arducam_OV2311_USB_Camera");
+        photonPoseEstimator = new PhotonPoseEstimator(
+                                            Constants.Feild.APRIL_TAG_FIELD_LAYOUT, 
+                                            PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, 
+                                            camera, 
+                                            Constants.Vision.robotToCamera
+                                        );
+
         odometry = new SwerveDrivePoseEstimator
                         (
                             Constants.Swerve.kDriveKinematics, 
@@ -67,6 +84,7 @@ public class SwerveSubsystem extends SubsystemBase {
 
         SmartDashboard.putData("field", m_field);
     }
+
 
     /*
      * Sets the gyro at the beginning of the match and 
@@ -83,6 +101,7 @@ public class SwerveSubsystem extends SubsystemBase {
             }
         }).start();
     }
+
 
     /*
      * Initializes autobuilder,
@@ -107,6 +126,7 @@ public class SwerveSubsystem extends SubsystemBase {
         );
     }
 
+
     /*
      * This method sets the gyro to 0 degrees
      * This method also sets the relative encoders on the swerve modules using the absolute encoders
@@ -115,7 +135,8 @@ public class SwerveSubsystem extends SubsystemBase {
         return runOnce(
             ()-> 
                 {
-                    setGyro(0);
+                    if(isFlipped()) setGyro(180); // if we are on red alliance
+                    else setGyro(0);
                     setRelativeTurnEncoderValues();
                 }
         );
@@ -128,8 +149,9 @@ public class SwerveSubsystem extends SubsystemBase {
      */
     public void setGyro(double degrees){
         gyro.reset();
-        gyro.setAngleAdjustment(degrees);
+        gyro.setAngleAdjustment(-degrees);
     }
+
 
     /*
      * getGyroHeading returns the angle the gyro is facing expressed as a Rotation2d
@@ -139,10 +161,11 @@ public class SwerveSubsystem extends SubsystemBase {
         return new Rotation2d(gyroAngle * -Math.PI/180);
     }
 
+
     /*
      * isFlipped returns true if we are red alliance and returns false if we are blue alliance
      */
-    private boolean isFlipped(){
+    public boolean isFlipped(){
         var alliance = DriverStation.getAlliance();
               if (alliance.isPresent()) {
                 return alliance.get() == DriverStation.Alliance.Red;
@@ -150,12 +173,14 @@ public class SwerveSubsystem extends SubsystemBase {
         return false;
     }
 
+
     /*
      * returns the pose the odometry is currently reading
      */
     public Pose2d getPose() {
         return odometry.getEstimatedPosition();
     }
+
 
     /*
      * Sets all the swerve modules to the states we want them to be in
@@ -168,6 +193,7 @@ public class SwerveSubsystem extends SubsystemBase {
         }
         
     }
+
 
     /*
      * returns the position of each swerve module (check SwerveModule.java for further details)
@@ -182,6 +208,8 @@ public class SwerveSubsystem extends SubsystemBase {
 
         return modulePositions;
     }
+
+
     /*
      * zeroes the drive motor encoders (check SwerveModule.java for further details)
      */
@@ -190,6 +218,7 @@ public class SwerveSubsystem extends SubsystemBase {
             module.zeroDrivePosition();
         }
     }
+
 
     /*
      * Uses the absolute encoders (cancoders) to set the relative encoders within each swerve module
@@ -202,16 +231,19 @@ public class SwerveSubsystem extends SubsystemBase {
 
     }
 
+
     /*
      * Manually resets the odometry to a given pose
      */
     public void resetOdometry(Pose2d pose) {
         SmartDashboard.putString("adjustment", pose.toString());
+        setGyro(pose.getRotation().getDegrees());
         odometry.resetPosition(
                 getGyroHeading(),
                 getModulePositions(),
                 pose);
     }
+
 
     /*
      * Stops all of the swerve modules
@@ -221,6 +253,7 @@ public class SwerveSubsystem extends SubsystemBase {
             module.stop();
         }
     }
+
 
     /*
      * Returns the state of each swerve module
@@ -235,6 +268,7 @@ public class SwerveSubsystem extends SubsystemBase {
         return states;
     }
 
+
     /*
      * Returns the current chassis speeds of the robot, 
      * used with pathplanner
@@ -242,6 +276,7 @@ public class SwerveSubsystem extends SubsystemBase {
     public ChassisSpeeds getLatestChassisSpeed(){
         return Constants.Swerve.kDriveKinematics.toChassisSpeeds(getModuleStates());
     }
+
 
     /*
      * Drives swerve given chassis speeds
@@ -258,15 +293,31 @@ public class SwerveSubsystem extends SubsystemBase {
     }
 
 
+    public Command driveToPose(Pose2d finalPose){
+
+        PathConstraints constraints = new PathConstraints(Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS, 
+                                    2, 
+                                                        Constants.Swerve.MAX_VELOCITY_RADIANS_PER_SECOND, 
+                                                        Constants.Swerve.MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED);
+        
+        return AutoBuilder.pathfindToPose(finalPose, constraints, 0, 0);
+    }
+
+
     @Override
     public void periodic() {
+        var result = camera.getLatestResult();
+        if(result.hasTargets()){
+            Optional<EstimatedRobotPose> poseEstimatorResult = photonPoseEstimator.update();
 
-        if(LimelightHelpers.getLatestResults("").targetingResults.targets_Fiducials.length >= 2){
-            double latency =  0.001 * (LimelightHelpers.getLatency_Capture("") + LimelightHelpers.getLatency_Pipeline(""));
-            SmartDashboard.putNumber("Latency", latency);
+            if(!poseEstimatorResult.isEmpty()){
+                Pose2d estimatedPose2d = poseEstimatorResult.get().estimatedPose.toPose2d();
 
-            // If the result was not grabbed from the peripherals of the limelight FOV
-            //odometry.addVisionMeasurement(LimelightHelpers.getBotPose2d_wpiBlue(""), Timer.getFPGATimestamp() - latency);
+                if(result.getTargets().size() > 1 || (result.getTargets().size() == 1 && result.getBestTarget().getPoseAmbiguity() < 0.2)){
+                    odometry.addVisionMeasurement(estimatedPose2d, poseEstimatorResult.get().timestampSeconds);
+                    SmartDashboard.putString("Vision Pose", estimatedPose2d.toString());
+                }
+            }
         }
 
         odometry.update( 
@@ -278,5 +329,6 @@ public class SwerveSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("gyro", getGyroHeading().getDegrees());
         SmartDashboard.putString("Robot Pose", odometry.getEstimatedPosition().toString());
     }
+
 
 }
