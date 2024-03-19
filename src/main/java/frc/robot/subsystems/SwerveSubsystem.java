@@ -305,7 +305,7 @@ public class SwerveSubsystem extends SubsystemBase {
     }
 
     public int getSpeakerId(){
-        if(isFlipped()) return 3;
+        if(isFlipped()) return 4;
         else return 8;
     }
 
@@ -331,11 +331,12 @@ public class SwerveSubsystem extends SubsystemBase {
         ChassisSpeeds newSpeeds = chassisSpeeds;
         if(rotationOverride){
             Rotation2d rotation = getRotationToSpeaker();
-            if(rotation != null){
+            if(rotation != null){ // If we can see the speaker tag
+                double currentRotation = getPose().getRotation().getDegrees();
                 newSpeeds = new ChassisSpeeds(
                                 chassisSpeeds.vxMetersPerSecond, 
                                 chassisSpeeds.vyMetersPerSecond, 
-                                MathUtil.clamp(thetaController.calculate(getPose().getRotation().getDegrees(), rotation.getDegrees()), -1, 1) * Constants.Swerve.MAX_ANGULAR_SPEED_METERS_PER_SECOND
+                                MathUtil.clamp(thetaController.calculate(currentRotation, currentRotation + rotation.getDegrees()), -1, 1) * Constants.Swerve.MAX_ANGULAR_SPEED_METERS_PER_SECOND
                             );
             }
         }

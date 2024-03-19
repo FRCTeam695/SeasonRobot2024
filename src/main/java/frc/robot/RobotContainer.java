@@ -175,10 +175,13 @@ public class RobotContainer {
       )
     );
 
+    /*
+     * TODO : TUNE THETA CONTROLLER AND FIND THE CORRECT TAG NUMBER FOR BLUE SPEAKER
+     */
     special_Shot_Trigger.onFalse
     (
       armToPosition(Math.toRadians(42))
-      
+
       .andThen
       (
         shoot(3000)
