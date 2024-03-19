@@ -2,21 +2,15 @@
   "version": 1.0,
   "startingPose": {
     "position": {
-      "x": 0.44577089154178473,
-      "y": 6.916726910376898
+      "x": 0.75,
+      "y": 4.43
     },
-    "rotation": 178.92169196938323
+    "rotation": 120.0
   },
   "command": {
     "type": "sequential",
     "data": {
       "commands": [
-        {
-          "type": "path",
-          "data": {
-            "pathName": "0A-shot"
-          }
-        },
         {
           "type": "named",
           "data": {
@@ -36,7 +30,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "0A-out"
+                  "pathName": "S-3"
                 }
               },
               {
@@ -51,13 +45,38 @@
         {
           "type": "path",
           "data": {
-            "pathName": "0A-back"
+            "pathName": "3-M"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Shoot Position"
+            "name": "Shoot Note"
+          }
+        },
+        {
+          "type": "race",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "M-2"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intake Note"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "2-M"
           }
         },
         {
@@ -69,6 +88,6 @@
       ]
     }
   },
-  "folder": null,
+  "folder": "Source Autos",
   "choreoAuto": false
 }

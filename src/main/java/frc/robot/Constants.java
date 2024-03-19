@@ -48,8 +48,8 @@ public final class Constants {
                 1, 6.92, 19, 19, Math.PI, 150.0 / 7, 1 };
         public static final double[] LITEBOT_CONSTANTS = { 194, -5, 2, 268, 6.12, 14.73, 14.73, 4 * Math.PI, 0.007, 
                 1, 4.49, 21, 24, Math.PI, 12.8, 0 };
-        public static final double[] PRODUCTION_2024 = { 275, 274, 265, 250, 6.12, 14.73, 14.73, 4 * Math.PI, 0.01,
-                1, 4.49, 23.0, 23.0, Math.PI, 12.8, 0};
+        public static final double[] PRODUCTION_2024 = { 275, 274, 265, 250, 6.12, 14.73, 14.73, 3.8 * Math.PI, 0.01,
+                1, 4.49, 22.5, 22.5, Math.PI, 12.8, 0};
 
         public static final Map<String, double[]> ROBOT_MAP = new HashMap<String, double[]>() {
             {
@@ -115,25 +115,6 @@ public final class Constants {
                 new Translation2d(-WHEEL_BASE / 2, -TRACK_WIDTH / 2)); // Back right wheel
     }
 
-    public static class VisionLimelight {
-        // Offsets are from ROBOT to CAMERA, so if offset of 0.2, 0.2, 0.2, that means
-        // camera is to the upwards top left of robot
-        public static final double CAMERA_HEIGHT_METERS = Units.inchesToMeters(0);
-        public static final double ROBOT_TO_CAMERA_OFFSET_FORWARD = Units.inchesToMeters(5.3);
-        public static final double ROBOT_TO_CAMERA_OFFSET_SIDEWAYS = 0;
-        public static final Transform2d CAMERA_TO_ROBOT_OFFSET = new Transform2d(ROBOT_TO_CAMERA_OFFSET_FORWARD, 0.0, new Rotation2d(0));
-        public static final double CAMERA_MOUNT_DEGREES = 40;// change
-
-        public static final double TARGET_HEIGHT_METERS = .5842; // change
-
-        //public static final String CAMERA_NAME = "USB_2.0_1080P_Camera";
-        //public static final double INTAKE_OFFSET = 0.3;
-        public static final Translation3d cameraToRobotOffset = new Translation3d(
-                Constants.VisionLimelight.ROBOT_TO_CAMERA_OFFSET_FORWARD,
-                Constants.VisionLimelight.ROBOT_TO_CAMERA_OFFSET_SIDEWAYS,
-                Constants.VisionLimelight.CAMERA_HEIGHT_METERS);
-    }
-
     public static class Intake {
         public static final int INTAKE_MOTOR_ID = 51;
         public static final int INDEX_MOTOR_ID = 52;
@@ -156,12 +137,21 @@ public final class Constants {
         public static final double KS = 0;
         public static final double KG = 0.05;
         public static final double KV = 0.2;
-        public static final double KA = 0;
+        public static final double KA = 0.01;
+
+        // public static final double KP = 0.;
+        // public static final double KD = 0.;
+        // public static final double KI = 0.;
+
+        // public static final double KS = 0;
+        // public static final double KG = 0.05;
+        // public static final double KV = 0.0;
+        // public static final double KA = 0.;
 
         public static final double STOCKPILE_POSITION_RADIANS = 0.3;
         public static final double INTAKE_POSITION_RADIANS = 0.99;
         public static final double SHOOT_POSITION_RADIANS = 1.05;
-        public static final double AMP_SCORE_RADIANS = Math.toRadians(120);//Math.toRadians(116.5);//2.08;
+        public static final double AMP_SCORE_RADIANS = 2.005;//Math.toRadians(120);//Math.toRadians(116.5);//2.08;
         public static final double FENDER_SHOT_POSITION_RADIANS = 0;
 
         public static final double MAX_POSITION_RADIANS = 2.17;
@@ -171,6 +161,8 @@ public final class Constants {
     public static class Shooter {
         public static final int SHOOTER_MOTOR_ID_1 = 50;
         public static final int SHOOTER_MOTOR_ID_2 = 53;
+        public static final int RPM_MAX = 5700;
+        public static final int RPM_SPEAKER = 2222; // original 2222
     }
 
     public static class Climber {
@@ -178,12 +170,16 @@ public final class Constants {
         public static final int CLIMBER_MOTOR_ID_2 = 56;
     }
 
+    public static class AmpBar {
+        public static final int AMP_BAR_ID = 57;
+    }
+
     public static class Vision {
         //public static final Transform3d robotToCamera = new Transform3d(Units.inchesToMeters(13.5), 0, Units.inchesToMeters(9.5), new Rotation3d(0, Math.toRadians(-65), 0));
                 public static final Transform3d robotToCamera = new Transform3d(
-                Units.inchesToMeters(0), //x
-                0, //y
-                Units.inchesToMeters(0), //z
+                Units.inchesToMeters(13.5), //x
+                0., //y
+                Units.inchesToMeters(8), //z
                 new Rotation3d(0,
                  Math.toRadians(-65), 
                  0));
@@ -195,11 +191,11 @@ public final class Constants {
         public static final AprilTagFieldLayout APRIL_TAG_FIELD_LAYOUT = AprilTagFields.k2024Crescendo.loadAprilTagLayoutField();
 
         public static class Red{
-            public static final ScoringLocation PODIUM_SCORING_LOCATION = new ScoringLocation(new Pose2d(14.64, 5.77, new Rotation2d(0.0)), 0, 0);
+            public static final ScoringLocation PODIUM_SCORING_LOCATION = new ScoringLocation(new Pose2d(13.74, 5.5, new Rotation2d(0.0)), 0, 0);
         }
 
         public static class Blue{
-            public static final ScoringLocation PODIUM_SCORING_LOCATION = new ScoringLocation(new Pose2d(), 0, 0);
+            public static final ScoringLocation PODIUM_SCORING_LOCATION = new ScoringLocation(new Pose2d(2.8, 5.5, new Rotation2d(0)), 0, 0);
         }
     }
 }

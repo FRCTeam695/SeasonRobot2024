@@ -5,6 +5,7 @@
 package frc.robot;
 
 import frc.robot.commands.SwerveDriveCommand;
+import frc.robot.subsystems.AmpBar;
 import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.ClimberSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
@@ -13,15 +14,13 @@ import frc.robot.subsystems.ScoringLocation;
 import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 import edu.wpi.first.wpilibj2.command.SelectCommand;
@@ -43,27 +42,28 @@ import com.pathplanner.lib.auto.NamedCommands;
  */
 public class RobotContainer {
 
-  private final SwerveSubsystem m_SwerveSubsystem = new SwerveSubsystem();
-  private final IntakeSubsystem m_IntakeSubsystem = new IntakeSubsystem();
-  private final ShooterSubsystem m_ShooterSubsystem = new ShooterSubsystem();
-  private final ClimberSubsystem m_ClimberSubsystem = new ClimberSubsystem();
-  private final LEDSubsystem m_LedSubsystem = new LEDSubsystem();
+  private final SwerveSubsystem Swerve = new SwerveSubsystem();
+  private final IntakeSubsystem Intake = new IntakeSubsystem();
+  private final ShooterSubsystem Shooter = new ShooterSubsystem();
+  private final ClimberSubsystem Climber = new ClimberSubsystem();
+  private final LEDSubsystem LEDs = new LEDSubsystem();
+  private final ArmSubsystem Arm = new ArmSubsystem();
+  private final AmpBar AmpBar = new AmpBar();
 
-  private final ArmSubsystem m_ArmSubsystem = new ArmSubsystem();
+  private final XboxController driver = new XboxController(0);
+  private final JoystickButton back_Button = new JoystickButton(driver, 7);
+  private final JoystickButton a_Button = new JoystickButton(driver, 1);
+  private final JoystickButton b_Button = new JoystickButton(driver, 2);
+  private final JoystickButton x_Button = new JoystickButton(driver, 3);
+  private final JoystickButton right_Bumper = new JoystickButton(driver, 6);
+  private final JoystickButton y_Button = new JoystickButton(driver, 4);
+  private final JoystickButton left_Bumper = new JoystickButton(driver, 5);
 
-  private final XboxController controller = new XboxController(0);
-  private final XboxController climberController = new XboxController(1);
-  private final JoystickButton back_Button = new JoystickButton(controller, 7);
-  private final JoystickButton a_Button = new JoystickButton(controller, 1);
-  private final JoystickButton b_Button = new JoystickButton(controller, 2);
-  private final JoystickButton x_Button = new JoystickButton(controller, 3);
 
-  private final JoystickButton y_Button = new JoystickButton(controller, 4);
-  private final JoystickButton left_Bumper = new JoystickButton(controller, 5);
-  private final JoystickButton y_Button_Climber = new JoystickButton(climberController, 4);
-  private final JoystickButton right_Bumper = new JoystickButton(controller, 6);
-  private final JoystickButton right_Bumper_Climber = new JoystickButton(climberController, 6);
-  private final JoystickButton amplify_Button_Climber = new JoystickButton(climberController, 1);
+  private final XboxController operator = new XboxController(1);
+  private final JoystickButton y_Button_Climber = new JoystickButton(operator, 4);
+  private final JoystickButton right_Bumper_Climber = new JoystickButton(operator, 6);
+  private final JoystickButton amplify_Button_Climber = new JoystickButton(operator, 1);
 
   //Network Table Stuff
   // private NetworkTableInstance inst = NetworkTableInstance.getDefault();
@@ -71,68 +71,63 @@ public class RobotContainer {
   // private StringSubscriber scoreLocationSub = NetworkTableInstance.getDefault().getStringTopic("Score Location").subscribe("");
 
   // Double suppliers
-  private final DoubleSupplier left_xAxis = () -> (controller.getRawAxis(0));
-  private final DoubleSupplier left_yAxis = () -> (controller.getRawAxis(1));
-  private final DoubleSupplier right_xAxis = () -> (controller.getRawAxis(4));
-  private final DoubleSupplier right_Trigger = () -> (controller.getRawAxis(3));
-  private final DoubleSupplier right_Trigger_Climber = () -> (climberController.getRawAxis(3));
-  private final DoubleSupplier climberController_y1 = () -> MathUtil.applyDeadband(climberController.getRawAxis(1), 0.05);
-  private final DoubleSupplier climberController_y2 = ()-> MathUtil.applyDeadband(climberController.getRawAxis(5), 0.05);
-
-  private PIDController xController = new PIDController(1, 0, 0);
-  private PIDController yController = new PIDController(1, 0, 0);
-  private ProfiledPIDController thetaController = new ProfiledPIDController(Constants.Swerve.PROFILED_KP_VALUE, 0,
-      0, Constants.Swerve.TRAPEZOID_THETA_CONSTRAINTS);
-
+  private final DoubleSupplier left_xAxis = () -> (driver.getRawAxis(0));
+  private final DoubleSupplier left_yAxis = () -> (driver.getRawAxis(1));
+  private final DoubleSupplier right_xAxis = () -> (driver.getRawAxis(4));
+  private final DoubleSupplier right_Trigger = () -> (driver.getRawAxis(3));
+  
+  private final DoubleSupplier right_Trigger_Operator = () -> (operator.getRawAxis(3));
+  private final DoubleSupplier climberLeft = () -> MathUtil.applyDeadband(operator.getRawAxis(1), 0.05);
+  private final DoubleSupplier climberRight = ()-> MathUtil.applyDeadband(operator.getRawAxis(5), 0.05);
 
 
   // Triggers
   private final Trigger shoot_Trigger = new Trigger(()-> (right_Trigger.getAsDouble() > .60));
-  private final Trigger podium_shot_Trigger = new Trigger(() -> (right_Trigger_Climber.getAsDouble() > .60) );
+  private final Trigger podium_shot_Trigger = new Trigger(() -> (right_Trigger_Operator.getAsDouble() > .60) );
 
   private final SendableChooser<Command> autoChooser;
-  private final SendableChooser<Integer> offsetChooser = new SendableChooser<>();
 
   public RobotContainer() {
 
     NamedCommands.registerCommand("Intake Note", intake());
-    NamedCommands.registerCommand("Shoot Note", shoot(2222).withTimeout(2));
+    NamedCommands.registerCommand("Shoot Note", shoot(Constants.Shooter.RPM_SPEAKER).withTimeout(2));
+    NamedCommands.registerCommand("Shoot Hard", shoot(4000).withTimeout(2));
+    NamedCommands.registerCommand("Podium Shot", shoot(3000).withTimeout(2));
+    NamedCommands.registerCommand("Podium Shot Position", armToPosition(Math.toRadians(43)));
     NamedCommands.registerCommand("Shoot Position", armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS));
+    NamedCommands.registerCommand("Shoot Hard Position", armToPosition(Units.degreesToRadians(40)));
 
     autoChooser = AutoBuilder.buildAutoChooser();
 
     configureBindings();
     defaultCommands();
 
-    xController.reset();
-    yController.reset();
-    thetaController.reset(null);
-
     SmartDashboard.putData("Auto Chooser", autoChooser);
-    SmartDashboard.putData("Swerve Subsystem", m_SwerveSubsystem);
-    SmartDashboard.putData("Intake Subsystem", m_IntakeSubsystem);
-    SmartDashboard.putData("Shooter Subsystem", m_ShooterSubsystem);
-    
-    
-    offsetChooser.addOption("left", 120);
-    offsetChooser.addOption("right", -120);
-    offsetChooser.addOption("mid", 180);
-    offsetChooser.setDefaultOption("mid", 180);
-
-    SmartDashboard.putData("gyro offsets", offsetChooser);
+    SmartDashboard.putData("Swerve Subsystem", Swerve);
+    SmartDashboard.putData("Intake Subsystem", Intake);
+    SmartDashboard.putData("Shooter Subsystem", Shooter);
   }
 
   private void configureBindings() {
-    // y_Button_Climber.onTrue(
-    //   armToPosition(Math.toRadians(41))
-    //   .andThen(shoot(3000))
-    //   .withTimeout(2)
-    // );
+     y_Button.onTrue(
+      //AmpBar.closedLoopControl(12.1)
+       armToPosition(Math.toRadians(42))
+       .andThen(shoot(3000))
+       .withTimeout(2)
+     );
 
+    /*
+     * B BUTTON BINDING:
+     * 
+     * 
+     */  
+    b_Button.onTrue(AmpBar.closedLoopControl(0));
+
+     /*
     y_Button_Climber.onTrue(armToPosition(Constants.Arm.AMP_SCORE_RADIANS)
                             .andThen(shoot(1000))
                             .withTimeout(2));
-    
+    */
 
     podium_shot_Trigger.onTrue(podiumShotCommand());
 
@@ -142,8 +137,10 @@ public class RobotContainer {
      * 
      * Intakes a note, runs the intake and the indexer
      */
-    left_Bumper.onTrue(
-      intake());
+    left_Bumper.onTrue
+    (
+      intake()
+    );
 
 
     /*
@@ -153,18 +150,15 @@ public class RobotContainer {
      * speed and then feeding the note in with the indexer,
      * stops after two seconds.
      */
-    shoot_Trigger.onTrue(
+    shoot_Trigger.onTrue
+    (
       shootNoteCommand()
-      .andThen(armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS)));
-
-    
-    /*
-     * B BUTTON BINDING:
-     * 
-     * Resets the gyro to the value chosen on smartdashboard,
-     * should be used at the beginning of a match
-     */  
-    b_Button.onTrue(new InstantCommand(()-> setGyroOffset(), m_SwerveSubsystem).ignoringDisable(true));
+      
+      .andThen
+        (
+          armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS)
+        )
+    );
 
 
 
@@ -173,12 +167,17 @@ public class RobotContainer {
      * 
      * Spits out a note using the intake and indexer
      */
-    right_Bumper.whileTrue(
+    right_Bumper.whileTrue
+    (
       armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS)
-      .andThen(parallel(
-        m_IntakeSubsystem.runIndexerToSpeed(1),
-        m_ShooterSubsystem.runVelocity(()-> 600)
-      ))
+      
+      .andThen
+      (
+        parallel(
+          Intake.runIndexerToSpeed(1),
+          Shooter.runVelocity(()-> 600)
+        )
+      )
 
     );
 
@@ -189,11 +188,18 @@ public class RobotContainer {
      * Sausages note then moves the arm to AMP scoring position,
      * then tells the shooter that next time we shoot, to run the shooters at AMP speed.
      */
-    a_Button.onTrue(sausageNote()
-                    .andThen(armToPosition(Constants.Arm.AMP_SCORE_RADIANS))
-                    .andThen(m_ShooterSubsystem.setScoringStatus("amp")));
+    a_Button.onTrue(
+                    Shooter.setScoringStatus("amp")
+                    .andThen
+                    (
+                      parallel
+                      (
+                        armToPosition(Constants.Arm.AMP_SCORE_RADIANS),
+                        spinShooterToSpeed(1000)
+                      )
+                    )
+                    );
 
-    //right_Bumper.onTrue(armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS));
 
     /*
      * X BUTTON BINDING:
@@ -201,8 +207,15 @@ public class RobotContainer {
      * Moves the arm to stockpile position,
      * then tells the shooter that next time we shoot, to run the shooters at max speed for stockpile.
      */
-    x_Button.onTrue(armToPosition(Constants.Arm.STOCKPILE_POSITION_RADIANS)
-                    .andThen(m_ShooterSubsystem.setScoringStatus("stockpile")));
+    x_Button.onTrue
+    (
+      armToPosition(Constants.Arm.STOCKPILE_POSITION_RADIANS)
+
+      .andThen
+      (
+        Shooter.setScoringStatus("stockpile")
+      )
+    );
 
     /*
      * BACK BUTTON BINDING:
@@ -210,7 +223,10 @@ public class RobotContainer {
      * Resets the gyro, this is used mostly in testing and 
      * shouldn't really be needed in a match unless something unexpected happens
      */
-    back_Button.onTrue(m_SwerveSubsystem.resetSwerve());
+    back_Button.onTrue
+    (
+      Swerve.resetSwerve()
+    );
     
     /*
      * AMPLIFY BUTTON BINDING:
@@ -218,7 +234,10 @@ public class RobotContainer {
      * Gives an LED signal to amplify the speaker
      * If we have already given the signal, if pressed again will turn the signal off
      */
-    amplify_Button_Climber.onTrue(amplifyButtonCommand());
+    amplify_Button_Climber.onTrue
+    (
+      amplifyButtonCommand()
+    );
 
     /*
      * Y BUTTON BINDING:
@@ -226,47 +245,64 @@ public class RobotContainer {
      * Moves the arm to shooting positon and sets the scoring status to speaker
      * This is used incase Ben accidentally stockpiles when meaning to shoot.
      */
-    y_Button.onTrue(
+    /*
+    y_Button.onTrue
+    (
       armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS)
-      .andThen(m_ShooterSubsystem.setScoringStatus("speaker"))
+
+      .andThen
+      (
+        Shooter.setScoringStatus("speaker")
+      )
     );
+    */
 
     /*
      * CLIMBER CONTROLLER RIGHT BUMPER BINDING:
      * 
      * Allows the operator to override the softlimits on the climbers temporarily
      */
-    right_Bumper_Climber.whileTrue(m_ClimberSubsystem.softLimitOverrideSlow(climberController_y1, climberController_y2));
+    right_Bumper_Climber.whileTrue
+    (
+      Climber.softLimitOverrideSlow(climberLeft, climberRight)
+    );
   }
 
+
   private void defaultCommands() {
+    AmpBar.setDefaultCommand(AmpBar.closedLoopControl(0));
     /*
      * Default command for drive train (swerve)
      */
-    m_SwerveSubsystem.setDefaultCommand(new SwerveDriveCommand(m_SwerveSubsystem, left_xAxis, left_yAxis, right_xAxis, true));
+    Swerve.setDefaultCommand(new SwerveDriveCommand(Swerve, left_xAxis, left_yAxis, right_xAxis, true));
 
     /*
-     * Default command for shooter, this ensures that 
+     * Default command for shoot
+     * er, this ensures that 
      * while the shooter is not in use it is not running
      * 
      * We use closed loop control instead of run velocity because it while fight better,
      * keeps the note in place nicely
      */
-    m_ShooterSubsystem.setDefaultCommand(m_ShooterSubsystem.shooterDefaultCommand(0));
-    //m_ShooterSubsystem.setDefaultCommand(m_ShooterSubsystem.runVelocity(()-> 0));
+    //Shooter.setDefaultCommand(Shooter.shooterDefaultCommand(0));
+    Shooter.setDefaultCommand(Shooter.runVelocity(()-> 0));
 
     /*
      * Default command for the intake, this ensures that
      * while the intake is not in use it is not running
      */
-    m_IntakeSubsystem.setDefaultCommand(m_IntakeSubsystem.runIntakeAndIndexerPercent(0.0));
+    Intake.setDefaultCommand(Intake.runIntakeAndIndexerPercent(0.0));
 
     /*
      * Default command for the climber, 
      * it reads the y-axis from each controller and sets each climber to speed
      */
-    m_ClimberSubsystem.setDefaultCommand(climberDefaultComand());
+    Climber.setDefaultCommand
+    (
+      Climber.runClimberMotors(climberLeft, climberRight)
+    );
   }
+
 
   /*
    * If we are already amplified, de amplify
@@ -276,22 +312,15 @@ public class RobotContainer {
     return new ConditionalCommand(
       
       // Command on true
-      m_LedSubsystem.deAmplify(), 
+      LEDs.deAmplify(), 
 
       // Command on false
-      m_LedSubsystem.amplifyLED(), 
+      LEDs.amplifyLED(), 
 
       // Boolean supplier condition
-      ()-> m_LedSubsystem.getColor().equals("amplify"));
+      ()-> LEDs.getColor().equals("amplify"));
   }
 
-  /*
-   * continuously runs each climber to a set speed
-   */
-  private Command climberDefaultComand(){
-    return
-      m_ClimberSubsystem.runClimberMotors(climberController_y1, climberController_y2);
-  }
 
   /*
    * Runs the intake in while stopping the shooters,
@@ -304,42 +333,67 @@ public class RobotContainer {
 
     // makes sure arm is in the correct position
     armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS)
-    .andThen(
+    .andThen
+    (
     
     // (runs the shooter to 0 velocity and run intake and indexer) until we get a beambreak
     race(
-      race(
-        // LED is for driver preference, so he knows when the robot is still intaking
-        m_LedSubsystem.setColorToGreen()
-        .andThen(m_IntakeSubsystem.runIntakeAndIndexerPercent(0.5))
-        , 
-        waitUntil(()-> m_IntakeSubsystem.getBeamBreak())
 
-      ),
-      m_ShooterSubsystem.runVelocity(()-> 0))
+        // LED is for driver preference, so he knows when the robot is still intaking
+        LEDs.setColorToGreen()
+        .andThen
+        (
+          Intake.runIntakeAndIndexerPercent(0.5)
+          .until
+          (
+            Intake::getBeamBreak
+          )
+        ),
+
+        Shooter.runVelocity(()-> 0)
       )
+    )
 
     // LED to orange means driver can drive away, won't effect the intake, we have the note
-    .andThen(m_LedSubsystem.setColorToOrange())
+    .andThen
+    (
+      LEDs.setColorToOrange()
+    )
 
     // runs the indexer backwards using closed loop control,
     // we do this because the shooter wheels need room to spin up to speed
-    .andThen(
-        race(
-          m_IntakeSubsystem.indexerClosedLoopControl(0.2, 0.25),
-          waitUntil(()-> !m_IntakeSubsystem.getBeamBreak())
-        )
+    .andThen
+    (
+      Intake.indexerClosedLoopControl(0.2, 0.25)
+      .until
+      (
+        Intake::getBeamMade
       )
-      .andThen(m_IntakeSubsystem.setNoteStatus(true))
+    )
+    .andThen
+    (
+      Intake.setNoteStatus(true)
+    )
 
-      // moves the arm to shoot position, 
-      // we default to shoot position until told otherwise by driver
-      .andThen(armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS))
-      .andThen(m_ShooterSubsystem.setScoringStatus("speaker"))
+    // moves the arm to shoot position, 
+    // we default to shoot position until told otherwise by driver
+    .andThen
+    (
+      armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS)
+    )
 
-      // the withName is for names commands
-      .withName("Intake Note")
-      ;
+    .andThen
+    (
+      Shooter.setScoringStatus("speaker")
+    )
+
+    // the withName is for names commands
+    .withName("Intake Note")
+    ;
+  }
+
+  private Command spinShooterToSpeed(int RPM){
+    return Shooter.runVelocity(()-> ((double) RPM/Constants.Shooter.RPM_MAX));
   }
 
   /*
@@ -355,24 +409,23 @@ public class RobotContainer {
     return race(
       
       // run the shooter wheels to speed
-      m_ShooterSubsystem.runVelocity(()-> (RPM/5700.0)),
-
-
+      Shooter.runVelocity(()-> ((double) RPM/Constants.Shooter.RPM_MAX)),
 
       // wait for shooters to get up to speed
-      waitUntil(m_ShooterSubsystem::isRunning)
-        .andThen(waitUntil(m_ShooterSubsystem::shooterIsUpToSpeed))
+      waitUntil(Shooter::isRunning)
+        .andThen(waitUntil(Shooter::shooterIsUpToSpeed))
         .andThen(
 
             race(
 
               // the shooters are now up to speed, so we run the indexers forward full speed
-              m_IntakeSubsystem.runIndexerToSpeed(1),
+              Intake.runIndexerToSpeed(1),
 
               // the following logic watches for a velocity dip in the shooter wheels
-              waitUntil(m_ShooterSubsystem::shooterIsNotUpToSpeed)
+              waitUntil(Shooter::shooterIsNotUpToSpeed)
+                .andThen(new WaitCommand(0.1))
                 .andThen(
-                  waitUntil(m_ShooterSubsystem::shooterIsUpToSpeed)
+                  waitUntil(Shooter::shooterIsUpToSpeed)
                       )
                 )
         )
@@ -380,48 +433,51 @@ public class RobotContainer {
     )
 
     // tells us that we do not have a note in possesion anymore
-    .andThen(m_IntakeSubsystem.setNoteStatus(false))
+    .andThen(Intake.setNoteStatus(false))
 
     // turns the led's off, this tells the driver we do not have a note anymore
-    .andThen(m_LedSubsystem.turnColorOff())
+    .andThen(LEDs.turnColorOff())
     ;
   }
 
-  /*
-   * Sausages the note in the shooter wheels, gets us ready for amp scoring
-   */
-  private Command sausageNote(){
-      return 
-          // Uses closed loop control in indexer to move the note into the shooter wheel
-          m_IntakeSubsystem.indexerClosedLoopControl(1.5, 1)
 
-          // Moves the note into place by using closed loop control
-          .andThen(
-            race(
-              // ends once it reaches the desired amount of rotations (0.75 in this case)
-              m_ShooterSubsystem.closedLoopRotation(0.75, 1, 0.0),
+  // /*
+  //  * Sausages the note in the shooter wheels, gets us ready for amp scoring
+  //  */
+  // private Command sausageNote(){
+  //     return 
+  //         // Uses closed loop control in indexer to move the note into the shooter wheel
+  //         Intake.indexerClosedLoopControl(1.5, 1)
 
-              // Doesn't end
-              m_IntakeSubsystem.runIndexerToSpeed(0.2)
-            )
-          );
-  }
+  //         // Moves the note into place by using closed loop control
+  //         .andThen(
+  //           race(
+  //             // ends once it reaches the desired amount of rotations (0.75 in this case)
+  //             Shooter.closedLoopRotation(0.75, 1, 0.0),
+
+  //             // Doesn't end
+  //             Intake.runIndexerToSpeed(0.2)
+  //           )
+  //         );
+  // }
   
-  /*
-   * Gives a quick closed loop rotation to give the note a quick push into the amp
-   */
 
-  private Command flickToAmp(){
+  // /*
+  //  * Gives a quick closed loop rotation to give the note a quick push into the amp
+  //  */
+  // private Command flickToAmp(){
 
-    // kp will most likely be subject to tuning
-    //0.17
-    return m_ShooterSubsystem.closedLoopRotation(1.1, 0.12, 0.0);
-  }
+  //   // kp will most likely be subject to tuning
+  //   //0.17
+  //   return Shooter.closedLoopRotation(1.1, 0.12, 0.0);
+  // }
 
-  private Command sausageToBeamBreak(){
-    return m_ShooterSubsystem.runVelocity(()-> 0.025).until(()-> m_IntakeSubsystem.getBeamBreak())
-            .andThen(m_ShooterSubsystem.closedLoopRotation(0, 0, 0));
-  }
+
+  // private Command sausageToBeamBreak(){
+  //   return Shooter.runVelocity(()-> 0.025).until(()-> Intake.getBeamBreak())
+  //           .andThen(Shooter.closedLoopRotation(0, 0, 0));
+  // }
+
 
   /*
    * Moves the arm to a given position
@@ -434,23 +490,24 @@ public class RobotContainer {
       // doesn't always have an accurate reading of where it is
 
       // ** INIT **
-      m_ArmSubsystem::resetStateToPresent,
+      Arm::resetStateToPresent,
 
       // ** EXECUTE **
-      ()-> m_ArmSubsystem.setGoal(position),
+      ()-> Arm.setGoal(position),
 
       // ** ON INTERRUPTED **
       interrupted->{},
 
       // ** END CONDITION **
-      m_ArmSubsystem::atGoal,
+      Arm::atGoal,
 
       // ** REQUIREMENTS **
-      m_ArmSubsystem)
+      Arm)
 
       // withName is just for named commands
       .withName("Shoot Position");
   }
+
 
   /*
    * Shoot the note, the same button is binded to amp and speaker this way
@@ -464,16 +521,27 @@ public class RobotContainer {
 
           // Moves arm to position
           armToPosition(Constants.Arm.AMP_SCORE_RADIANS)
-
-          // Flicks the note into the amp
-          .andThen(sausageToBeamBreak())
           .andThen(
-          flickToAmp()
+            parallel
+            (
+              AmpBar.closedLoopControl(12),
+              shoot(1000)
+            ).withTimeout(1)
+          )
+          .andThen(new WaitCommand(0.4))
+          .andThen(AmpBar.closedLoopControl(0))
+          .andThen(LEDs.turnColorOff())
+          ),
 
-          // The wait command is here because if we move the arm back to intake position 
-          //immediatly after amp scoring, if we miss the note will bounce back and get stuck in the robot
-          .andThen(m_LedSubsystem.turnColorOff())
-          .andThen(new WaitCommand(1.0)))),
+          // // Flicks the note into the amp
+          // .andThen(sausageToBeamBreak())
+          // .andThen(
+          // flickToAmp()
+
+          // // The wait command is here because if we move the arm back to intake position 
+          // //immediatly after amp scoring, if we miss the note will bounce back and get stuck in the robot
+          // .andThen(LEDs.turnColorOff())
+          // .andThen(new WaitCommand(1.0)))),
 
           
         Map.entry("speaker", 
@@ -482,8 +550,8 @@ public class RobotContainer {
           armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS)
 
           // Shoots the note into speaker
-          .andThen(shoot(2222)).withTimeout(2)
-          .andThen(m_LedSubsystem.turnColorOff())),
+          .andThen(shoot(Constants.Shooter.RPM_SPEAKER)).withTimeout(2)
+          .andThen(LEDs.turnColorOff())),
 
 
         Map.entry("stockpile", 
@@ -492,44 +560,19 @@ public class RobotContainer {
           armToPosition(Constants.Arm.STOCKPILE_POSITION_RADIANS)
 
           // Shoots the note at full speed
-          .andThen(shoot(2222)).withTimeout(2))
+          .andThen(shoot(Constants.Shooter.RPM_SPEAKER)).withTimeout(2))
           
       ),
 
     // condition (boolean supplier)
-    ()-> m_ShooterSubsystem.getScoringStatus());
+    ()-> Shooter.getScoringStatus());
   }
+
 
   public Command scorePreload(){
-    return armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS).andThen(shoot(2222));
+    return armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS).andThen(shoot(Constants.Shooter.RPM_SPEAKER));
   }
 
-  public void setGyroOffset(){
-    double val = 50;
-    m_SwerveSubsystem.setGyro(val);
-  }
-
-  // public Command startingAuton(){
-  //   //return scorePreload()
-  //   //.andThen(mid_to_2_command())
-  //   return mid_to_2_command()
-  //   ;
-  // }
-
-  // public Command mid_to_2_command(){
-  //   Trajectory trajectory1 = mid_to_2();
-
-  //   var swerveControllerCommand = new SwerveControllerCommand(trajectory1, m_SwerveSubsystem::getPose,
-  //       Constants.Swerve.kDriveKinematics, xController, yController, thetaController, m_SwerveSubsystem::setModules,
-  //       m_SwerveSubsystem);
-
-  //   return runOnce(
-  //     ()-> m_SwerveSubsystem.resetOdometry(trajectory1.getInitialPose())
-  //   )
-  //   .andThen(swerveControllerCommand)
-  //   .andThen(()-> m_SwerveSubsystem.stopModules())
-  //   ;
-  // }
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
@@ -537,31 +580,12 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    //return startingAuton();
     return autoChooser.getSelected();
-    //return new WaitCommand(1);
   }
+
   public Command podiumShotCommand() {
-    return m_SwerveSubsystem.driveToPose(Constants.Feild.Blue.PODIUM_SCORING_LOCATION.getPose());
+    return Swerve.driveToPose(Constants.Feild.Red.PODIUM_SCORING_LOCATION.getPose());
   }
-
-  // public Trajectory mid_to_2(){
-  //   TrajectoryConfig trajectoryConfig1 = new TrajectoryConfig(Constants.Swerve.MAX_SPEED_METERS_PER_SECONDS * 0.2, 
-  //                                                             3);
-    
-  //   Trajectory trajectory1 =
-  //       TrajectoryGenerator.generateTrajectory(
-
-  //         new Pose2d(0, 0, new Rotation2d(Math.PI)),
-
-  //         List.of(new Translation2d(Units.inchesToMeters(30), 0)),
-
-  //         new Pose2d(Units.inchesToMeters(62), Units.inchesToMeters(0), new Rotation2d(Math.PI)),
-
-  //         trajectoryConfig1);
-
-  //   return trajectory1;
-  // }
 
 
 

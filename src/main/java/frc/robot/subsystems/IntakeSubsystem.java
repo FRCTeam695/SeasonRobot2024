@@ -25,16 +25,17 @@ public class IntakeSubsystem extends SubsystemBase{
     private SparkPIDController indexerPIDController;
     private RelativeEncoder indexerEncoder;
 
-    CANSparkFlex shootMotor1;
-    CANSparkFlex shootMotor2;
-
     DigitalInput beamBreak;
     boolean noteStatus;
 
     public IntakeSubsystem(){
         intakeMotor = new CANSparkMax(Constants.Intake.INTAKE_MOTOR_ID, MotorType.kBrushless);
-
+        intakeMotor.restoreFactoryDefaults();
+        intakeMotor.clearFaults();
+    
         indexMotor = new CANSparkMax(Constants.Intake.INDEX_MOTOR_ID, MotorType.kBrushless);
+        indexMotor.restoreFactoryDefaults();
+        indexMotor.clearFaults();
         indexerEncoder = indexMotor.getEncoder();
         indexerPIDController = indexMotor.getPIDController();
 
@@ -51,6 +52,10 @@ public class IntakeSubsystem extends SubsystemBase{
 
     public boolean getBeamBreak(){
         return beamBreak.get();
+    }
+
+    public boolean getBeamMade(){
+        return !getBeamBreak();
     }
 
     public boolean getNoteStatus(){

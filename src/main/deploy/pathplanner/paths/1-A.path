@@ -3,25 +3,25 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 2.78,
-        "y": 6.94
+        "x": 2.88,
+        "y": 6.99
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.501416594530762,
-        "y": 6.9059718889195265
+        "x": 2.391172810182771,
+        "y": 6.941969143785617
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 0.73,
-        "y": 6.56
+        "x": 0.75,
+        "y": 6.67
       },
       "prevControl": {
-        "x": 0.7401886415755699,
-        "y": 6.558068465637644
+        "x": 1.39784299924834,
+        "y": 6.778413963952611
       },
       "nextControl": null,
       "isLocked": false,
@@ -32,8 +32,8 @@
   "constraintZones": [],
   "eventMarkers": [
     {
-      "name": "Shoot Position",
-      "waypointRelativePos": 0.4,
+      "name": "Arm to Position",
+      "waypointRelativePos": 0.5,
       "command": {
         "type": "parallel",
         "data": {
@@ -41,7 +41,7 @@
             {
               "type": "named",
               "data": {
-                "name": "Intake Note"
+                "name": "Shoot Position"
               }
             }
           ]
@@ -50,10 +50,10 @@
     }
   ],
   "globalConstraints": {
-    "maxVelocity": 2.0,
+    "maxVelocity": 3.0,
     "maxAcceleration": 1.0,
     "maxAngularVelocity": 540.0,
-    "maxAngularAcceleration": 720.0
+    "maxAngularAcceleration": 500.0
   },
   "goalEndState": {
     "velocity": 0,
@@ -61,10 +61,10 @@
     "rotateFast": false
   },
   "reversed": false,
-  "folder": null,
+  "folder": "Amp Paths",
   "previewStartingState": {
-    "rotation": -160.0,
-    "velocity": 0
+    "rotation": 180.0,
+    "velocity": 0.0
   },
   "useDefaultConstraints": true
 }

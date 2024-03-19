@@ -2,7 +2,7 @@
   "version": 1.0,
   "startingPose": {
     "position": {
-      "x": 1.25,
+      "x": 1.35,
       "y": 5.55
     },
     "rotation": 180.0
@@ -30,7 +30,38 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "0M-out"
+                  "pathName": "M-2"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intake Note"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Podium Shot Position"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Podium Shot"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "2-6"
                 }
               },
               {
@@ -45,24 +76,18 @@
         {
           "type": "path",
           "data": {
-            "pathName": "0M-back"
+            "pathName": "6-2"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Shoot Position"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Shoot Note"
+            "name": "Podium Shot"
           }
         }
       ]
     }
   },
-  "folder": null,
+  "folder": "Middle Autos",
   "choreoAuto": false
 }

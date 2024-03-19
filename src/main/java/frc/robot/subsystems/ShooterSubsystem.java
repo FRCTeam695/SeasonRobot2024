@@ -39,6 +39,13 @@ public class ShooterSubsystem extends SubsystemBase {
 
   /** Creates a new ExampleSubsystem. */
   public ShooterSubsystem() {
+
+    shooterNeo1.restoreFactoryDefaults();
+    shooterNeo2.restoreFactoryDefaults();
+
+    shooterNeo1.clearFaults();
+    shooterNeo2.clearFaults();
+
     shooterNeoEncoder1.setPosition(0);
     shooterNeoEncoder2.setPosition(0);
 

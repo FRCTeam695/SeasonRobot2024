@@ -12,6 +12,7 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 // import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -31,6 +32,10 @@ public class ArmSubsystem extends SubsystemBase {
 
   public ArmSubsystem() {
     m_pitchControlMotor = new CANSparkMax(Constants.Arm.PITCH_MOTOR_ID, MotorType.kBrushless);
+
+    m_pitchControlMotor.restoreFactoryDefaults();
+    m_pitchControlMotor.clearFaults();
+
     m_pitchControlMotor.setSmartCurrentLimit(20);
 
     armDI = new DigitalInput(Constants.Arm.ARM_ENCODER_PORT);
@@ -92,8 +97,8 @@ public class ArmSubsystem extends SubsystemBase {
 
     double feedforwardOutput = -1 * m_feedForward.calculate(getAbsolutePosition(), velocity, acceleration);
 
-    // SmartDashboard.putNumber("PID OUTPUT", pidOutput);
-    // SmartDashboard.putNumber("FEEDFORWARD OUTPUT", feedforwardOutput);
+    SmartDashboard.putNumber("PID OUTPUT", pidOutput);
+    SmartDashboard.putNumber("FEEDFORWARD OUTPUT", feedforwardOutput);
     // SmartDashboard.putNumber("SETPOINT", m_controller.getSetpoint().position);
     // SmartDashboard.putNumber("GOAL", m_controller.getGoal().position);
 
@@ -106,8 +111,9 @@ public class ArmSubsystem extends SubsystemBase {
   
   @Override
   public void periodic(){
-    // SmartDashboard.putNumber("ARM ENCODER POSITION", getAbsolutePosition());
-    // SmartDashboard.putBoolean("AT GOAL", atGoal());
+    SmartDashboard.putNumber("ARM ENCODER POSITION", getAbsolutePosition());
+    SmartDashboard.putNumber("Arm Goal", goal);
+    SmartDashboard.putBoolean("AT GOAL", atGoal());
     // SmartDashboard.putNumber("ARM ENCODER RAW", m_encoder.getAbsolutePosition());
 
     if(goal == 0){

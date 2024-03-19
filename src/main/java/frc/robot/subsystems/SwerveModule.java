@@ -37,8 +37,8 @@ public class SwerveModule{
         //Current limit to the falcons
         SupplyCurrentLimitConfiguration falconlimit = new SupplyCurrentLimitConfiguration();
         falconlimit.enable = true;
-        falconlimit.currentLimit = 20;
-        falconlimit.triggerThresholdCurrent = 20;
+        falconlimit.currentLimit = 30;
+        falconlimit.triggerThresholdCurrent = 30;
         falconlimit.triggerThresholdTime = 0;
 
         //Creates and configs drive motor

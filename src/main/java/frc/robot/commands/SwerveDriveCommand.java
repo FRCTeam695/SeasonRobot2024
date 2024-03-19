@@ -73,6 +73,7 @@ public class SwerveDriveCommand extends Command {
     // construct chassis speeds
     ChassisSpeeds chassisSpeeds;
     if (fieldOriented) {
+      // CHanged the rotation from gyro to odometry
         chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(Yj, Xj, Zj, m_Subsystem.getGyroHeading());
     } else {
         chassisSpeeds = new ChassisSpeeds(Yj, Xj, Zj);

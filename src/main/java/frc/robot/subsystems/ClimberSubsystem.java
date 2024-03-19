@@ -33,6 +33,12 @@ public class ClimberSubsystem extends SubsystemBase {
     climberMotor1 = new CANSparkMax(Constants.Climber.CLIMBER_MOTOR_ID_1, MotorType.kBrushless);
     climberMotor2 = new CANSparkMax(Constants.Climber.CLIMBER_MOTOR_ID_2, MotorType.kBrushless);
 
+    climberMotor1.restoreFactoryDefaults();
+    climberMotor1.clearFaults();
+
+    climberMotor2.restoreFactoryDefaults();
+    climberMotor2.clearFaults();
+
     encoder1 = climberMotor1.getEncoder();
     encoder2 = climberMotor2.getEncoder();
 
