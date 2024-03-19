@@ -45,7 +45,7 @@
         {
           "type": "named",
           "data": {
-            "name": "Podium Shot Position"
+            "name": "Shoot Hard Position"
           }
         },
         {
@@ -74,9 +74,22 @@
           }
         },
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "6-2"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "6-2"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Shoot Hard Position"
+                }
+              }
+            ]
           }
         },
         {

@@ -93,9 +93,9 @@ public class RobotContainer {
     NamedCommands.registerCommand("Shoot Note", shoot(Constants.Shooter.RPM_SPEAKER).withTimeout(2));
     NamedCommands.registerCommand("Shoot Hard", shoot(4000).withTimeout(2));
     NamedCommands.registerCommand("Podium Shot", shoot(3000).withTimeout(2));
-    NamedCommands.registerCommand("Podium Shot Position", armToPosition(Math.toRadians(43)));
+    NamedCommands.registerCommand("Podium Shot Position", armToPosition(Math.toRadians(40)));
     NamedCommands.registerCommand("Shoot Position", armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS));
-    NamedCommands.registerCommand("Shoot Hard Position", armToPosition(Units.degreesToRadians(40)));
+    NamedCommands.registerCommand("Shoot Hard Position", armToPosition(Units.degreesToRadians(43)));
 
     autoChooser = AutoBuilder.buildAutoChooser();
 
