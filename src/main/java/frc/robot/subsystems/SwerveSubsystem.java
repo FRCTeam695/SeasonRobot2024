@@ -105,6 +105,7 @@ public class SwerveSubsystem extends SubsystemBase {
         initAutoBuilder();
         initSwerve();
 
+        thetaController.enableContinuousInput(-180, 180);
         SmartDashboard.putData("field", m_field);
     }
 
@@ -317,7 +318,11 @@ public class SwerveSubsystem extends SubsystemBase {
             List<PhotonTrackedTarget> targets = result.getTargets();
 
             for(PhotonTrackedTarget target : targets){
-                if(target.getFiducialId() == getSpeakerId()) return new Rotation2d(target.getYaw());
+                if(target.getFiducialId() == getSpeakerId()) {
+                    double yaw = target.getYaw();
+                    SmartDashboard.putNumber("Yaw", yaw);
+                    return new Rotation2d(yaw);
+                };
             }
         }
         return null;
@@ -333,10 +338,12 @@ public class SwerveSubsystem extends SubsystemBase {
             Rotation2d rotation = getRotationToSpeaker();
             if(rotation != null){ // If we can see the speaker tag
                 double currentRotation = getPose().getRotation().getDegrees();
+                double ROTATION_PID_OUTPUT = thetaController.calculate(currentRotation, currentRotation + rotation.getDegrees());
+                SmartDashboard.putNumber("ROTATION_PID_OUTPUT", ROTATION_PID_OUTPUT);
                 newSpeeds = new ChassisSpeeds(
                                 chassisSpeeds.vxMetersPerSecond, 
                                 chassisSpeeds.vyMetersPerSecond, 
-                                MathUtil.clamp(thetaController.calculate(currentRotation, currentRotation + rotation.getDegrees()), -1, 1) * Constants.Swerve.MAX_ANGULAR_SPEED_METERS_PER_SECOND
+                                MathUtil.clamp(ROTATION_PID_OUTPUT, -1, 1) * Constants.Swerve.MAX_ANGULAR_SPEED_METERS_PER_SECOND
                             );
             }
         }
