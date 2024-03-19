@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.photonvision.EstimatedRobotPose;
@@ -19,8 +20,10 @@ import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.ReplanningConfig;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -53,10 +56,13 @@ public class SwerveSubsystem extends SubsystemBase {
     private final Field2d m_field = new Field2d();
     private final SwerveDrivePoseEstimator odometry;
     private final AHRS gyro = new AHRS(SPI.Port.kMXP);
+    private final PIDController thetaController = new PIDController(0, 0, 0);
 
     private double prev_vel = 0;
     private double prev_timestamp = 0;
     private double max_accel = 0;
+
+    private boolean rotationOverride = false;
 
     public SwerveSubsystem() {
 
@@ -99,6 +105,7 @@ public class SwerveSubsystem extends SubsystemBase {
         initAutoBuilder();
         initSwerve();
 
+        thetaController.enableContinuousInput(-180, 180);
         SmartDashboard.putData("field", m_field);
     }
 
@@ -198,6 +205,10 @@ public class SwerveSubsystem extends SubsystemBase {
         return odometry.getEstimatedPosition();
     }
 
+    public Command setRotationOverride(boolean override){
+        return runOnce(()-> rotationOverride = override);
+    }
+
 
     /*
      * Sets all the swerve modules to the states we want them to be in
@@ -294,16 +305,54 @@ public class SwerveSubsystem extends SubsystemBase {
         return Constants.Swerve.kDriveKinematics.toChassisSpeeds(getModuleStates());
     }
 
+    public int getSpeakerId(){
+        if(isFlipped()) return 4;
+        else return 8;
+    }
+
+    public Rotation2d getRotationToSpeaker(){
+        var result = camera.getLatestResult();
+        if(!result.hasTargets()) return null;
+        else{
+            // Get a list of currently tracked targets.
+            List<PhotonTrackedTarget> targets = result.getTargets();
+
+            for(PhotonTrackedTarget target : targets){
+                if(target.getFiducialId() == getSpeakerId()) {
+                    double yaw = target.getYaw();
+                    SmartDashboard.putNumber("Yaw", yaw);
+                    return new Rotation2d(yaw);
+                };
+            }
+        }
+        return null;
+    }
+
 
     /*
      * Drives swerve given chassis speeds
      */
     public void driveSwerve(ChassisSpeeds chassisSpeeds) {
+        ChassisSpeeds newSpeeds = chassisSpeeds;
+        if(rotationOverride){
+            Rotation2d rotation = getRotationToSpeaker();
+            if(rotation != null){ // If we can see the speaker tag
+                double currentRotation = getPose().getRotation().getDegrees();
+                double ROTATION_PID_OUTPUT = thetaController.calculate(currentRotation, currentRotation + rotation.getDegrees());
+                SmartDashboard.putNumber("ROTATION_PID_OUTPUT", ROTATION_PID_OUTPUT);
+                newSpeeds = new ChassisSpeeds(
+                                chassisSpeeds.vxMetersPerSecond, 
+                                chassisSpeeds.vyMetersPerSecond, 
+                                MathUtil.clamp(ROTATION_PID_OUTPUT, -1, 1) * Constants.Swerve.MAX_ANGULAR_SPEED_METERS_PER_SECOND
+                            );
+            }
+        }
+        
         // discretizes the chassis speeds (acccounts for robot skew)
-        chassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, Constants.Swerve.DISCRETIZE_TIMESTAMP);
+        newSpeeds = ChassisSpeeds.discretize(newSpeeds, Constants.Swerve.DISCRETIZE_TIMESTAMP);
 
         // convert chassis speeds to module states
-        SwerveModuleState[] moduleStates = Constants.Swerve.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
+        SwerveModuleState[] moduleStates = Constants.Swerve.kDriveKinematics.toSwerveModuleStates(newSpeeds);
 
         // set the modules to their desired speeds
         setModules(moduleStates);

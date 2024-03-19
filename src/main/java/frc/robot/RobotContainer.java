@@ -11,7 +11,7 @@ import frc.robot.subsystems.ClimberSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.LEDSubsystem;
 import frc.robot.subsystems.ScoringLocation;
-import frc.robot.subsystems.ShooterSubsystem;
+import frc.robot.subsystems.ShooterSubsystem; 
 import frc.robot.subsystems.SwerveSubsystem;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;
@@ -75,6 +75,7 @@ public class RobotContainer {
   private final DoubleSupplier left_yAxis = () -> (driver.getRawAxis(1));
   private final DoubleSupplier right_xAxis = () -> (driver.getRawAxis(4));
   private final DoubleSupplier right_Trigger = () -> (driver.getRawAxis(3));
+  private final DoubleSupplier left_Trigger = ()-> (driver.getRawAxis(2));
   
   private final DoubleSupplier right_Trigger_Operator = () -> (operator.getRawAxis(3));
   private final DoubleSupplier climberLeft = () -> MathUtil.applyDeadband(operator.getRawAxis(1), 0.05);
@@ -83,6 +84,7 @@ public class RobotContainer {
 
   // Triggers
   private final Trigger shoot_Trigger = new Trigger(()-> (right_Trigger.getAsDouble() > .60));
+  private final Trigger special_Shot_Trigger = new Trigger(()-> (right_Trigger.getAsDouble() > 0.60));
   private final Trigger podium_shot_Trigger = new Trigger(() -> (right_Trigger_Operator.getAsDouble() > .60) );
 
   private final SendableChooser<Command> autoChooser;
@@ -158,6 +160,37 @@ public class RobotContainer {
         (
           armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS)
         )
+    );
+
+    special_Shot_Trigger.whileTrue
+    (
+      Swerve.setRotationOverride(true)
+      .andThen
+      (
+        parallel
+        (
+          armToPosition(Math.toRadians(42)),
+          spinShooterToSpeed(3000)
+        )
+      )
+    );
+
+    /*
+     * TODO : TUNE THETA CONTROLLER AND FIND THE CORRECT TAG NUMBER FOR BLUE SPEAKER
+     */
+    special_Shot_Trigger.onFalse
+    (
+      armToPosition(Math.toRadians(42))
+
+      .andThen
+      (
+        shoot(3000)
+      )
+
+      .andThen
+      (
+        Swerve.setRotationOverride(false)
+      )
     );
 
 
