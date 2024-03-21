@@ -84,7 +84,7 @@ public class RobotContainer {
 
   // Triggers
   private final Trigger shoot_Trigger = new Trigger(()-> (right_Trigger.getAsDouble() > .60));
-  private final Trigger special_Shot_Trigger = new Trigger(()-> (right_Trigger.getAsDouble() > 0.60));
+  private final Trigger special_Shot_Trigger = new Trigger(()-> (left_Trigger.getAsDouble() > 0.30));
   private final Trigger podium_shot_Trigger = new Trigger(() -> (right_Trigger_Operator.getAsDouble() > .60) );
 
   private final SendableChooser<Command> autoChooser;
@@ -95,7 +95,7 @@ public class RobotContainer {
     NamedCommands.registerCommand("Shoot Note", shoot(Constants.Shooter.RPM_SPEAKER).withTimeout(2));
     NamedCommands.registerCommand("Shoot Hard", shoot(4000).withTimeout(2));
     NamedCommands.registerCommand("Podium Shot", shoot(3000).withTimeout(2));
-    NamedCommands.registerCommand("Podium Shot Position", armToPosition(Math.toRadians(40)));
+    NamedCommands.registerCommand("Podium Shot Position", armToPosition(Math.toRadians(41)));
     NamedCommands.registerCommand("Shoot Position", armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS));
     NamedCommands.registerCommand("Shoot Hard Position", armToPosition(Units.degreesToRadians(43)));
 
@@ -108,12 +108,13 @@ public class RobotContainer {
     SmartDashboard.putData("Swerve Subsystem", Swerve);
     SmartDashboard.putData("Intake Subsystem", Intake);
     SmartDashboard.putData("Shooter Subsystem", Shooter);
+    SmartDashboard.putNumber("vel", 0);
   }
 
   private void configureBindings() {
      y_Button.onTrue(
       //AmpBar.closedLoopControl(12.1)
-       armToPosition(Math.toRadians(42))
+       armToPosition(Constants.Arm.PODIUM_SHOT_POSITION_RADIANS) //changed from 42
        .andThen(shoot(3000))
        .withTimeout(2)
      );
@@ -131,7 +132,7 @@ public class RobotContainer {
                             .withTimeout(2));
     */
 
-    podium_shot_Trigger.onTrue(podiumShotCommand());
+    // podium_shot_Trigger.onTrue(podiumShotCommand());
 
 
     /*
@@ -164,13 +165,13 @@ public class RobotContainer {
 
     special_Shot_Trigger.whileTrue
     (
-      Swerve.setRotationOverride(true)
+      runOnce(()-> Swerve.startRotationOverride())
       .andThen
       (
         parallel
         (
-          armToPosition(Math.toRadians(42)),
-          spinShooterToSpeed(3000)
+          armToPosition(Constants.Arm.PODIUM_SHOT_POSITION_RADIANS), //armToPosition(Swerve.getPitchToSpeaker()),
+          spinShooterToSpeed(3000) //spinShooterToSpeed(1000) 
         )
       )
     );
@@ -178,20 +179,25 @@ public class RobotContainer {
     /*
      * TODO : TUNE THETA CONTROLLER AND FIND THE CORRECT TAG NUMBER FOR BLUE SPEAKER
      */
-    special_Shot_Trigger.onFalse
-    (
-      armToPosition(Math.toRadians(42))
+    special_Shot_Trigger.onFalse(
+      runOnce(()-> Swerve.endRotationOverride())
+      .andThen(shoot(3000))
+      .withTimeout(1)
+      );
+    // special_Shot_Trigger.onFalse
+    // (
+    //   armToPosition(Constants.Arm.PODIUM_SHOT_POSITION_RADIANS)
 
-      .andThen
-      (
-        shoot(3000)
-      )
+    //   .andThen
+    //   (
+    //     shoot(3000)  //shoot(Swerve.getRPMToSpeaker())
+    //   )
 
-      .andThen
-      (
-        Swerve.setRotationOverride(false)
-      )
-    );
+    //   .andThen
+    //   (
+    //     Swerve.setRotationOverride(false)
+    //   )
+    // );
 
 
 
@@ -317,7 +323,6 @@ public class RobotContainer {
      * We use closed loop control instead of run velocity because it while fight better,
      * keeps the note in place nicely
      */
-    //Shooter.setDefaultCommand(Shooter.shooterDefaultCommand(0));
     Shooter.setDefaultCommand(Shooter.runVelocity(()-> 0));
 
     /*
@@ -565,17 +570,6 @@ public class RobotContainer {
           .andThen(AmpBar.closedLoopControl(0))
           .andThen(LEDs.turnColorOff())
           ),
-
-          // // Flicks the note into the amp
-          // .andThen(sausageToBeamBreak())
-          // .andThen(
-          // flickToAmp()
-
-          // // The wait command is here because if we move the arm back to intake position 
-          // //immediatly after amp scoring, if we miss the note will bounce back and get stuck in the robot
-          // .andThen(LEDs.turnColorOff())
-          // .andThen(new WaitCommand(1.0)))),
-
           
         Map.entry("speaker", 
 

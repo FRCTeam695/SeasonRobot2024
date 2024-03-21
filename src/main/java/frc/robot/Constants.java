@@ -48,7 +48,7 @@ public final class Constants {
                 1, 6.92, 19, 19, Math.PI, 150.0 / 7, 1 };
         public static final double[] LITEBOT_CONSTANTS = { 194, -5, 2, 268, 6.12, 14.73, 14.73, 4 * Math.PI, 0.007, 
                 1, 4.49, 21, 24, Math.PI, 12.8, 0 };
-        public static final double[] PRODUCTION_2024 = { 275, 274, 265, 250, 6.12, 14.73, 14.73, 3.8 * Math.PI, 0.01,
+        public static final double[] PRODUCTION_2024 = { (93.42 + 180), 273.5, (180 + 84.11), (180 + 69), 6.12, 14.73, 14.73, 3.8 * Math.PI, 0.01,
                 1, 4.49, 22.5, 22.5, Math.PI, 12.8, 0};
 
         public static final Map<String, double[]> ROBOT_MAP = new HashMap<String, double[]>() {
@@ -151,8 +151,9 @@ public final class Constants {
         public static final double STOCKPILE_POSITION_RADIANS = 0.3;
         public static final double INTAKE_POSITION_RADIANS = 0.99;
         public static final double SHOOT_POSITION_RADIANS = 1.05;
-        public static final double AMP_SCORE_RADIANS = 2.005;//Math.toRadians(120);//Math.toRadians(116.5);//2.08;
+        public static final double AMP_SCORE_RADIANS = Math.toRadians(120);//Math.toRadians(116.5);//2.08;
         public static final double FENDER_SHOT_POSITION_RADIANS = 0;
+        public static final double PODIUM_SHOT_POSITION_RADIANS = Math.toRadians(42);
 
         public static final double MAX_POSITION_RADIANS = 2.17;
         public static final double MIN_POSITION_RADIANS = STOCKPILE_POSITION_RADIANS;

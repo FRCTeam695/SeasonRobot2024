@@ -2,25 +2,32 @@
   "version": 1.0,
   "startingPose": {
     "position": {
-      "x": 0.75,
-      "y": 6.7
+      "x": 0.66,
+      "y": 4.371055665188254
     },
-    "rotation": -120.0
+    "rotation": 120.0
   },
   "command": {
     "type": "sequential",
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "JPK-Move1"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Shoot Position"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "S-Move_Out"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Shoot Position"
+                }
+              }
+            ]
           }
         },
         {
@@ -34,59 +41,15 @@
           "data": {
             "commands": [
               {
-                "type": "named",
-                "data": {
-                  "name": "Intake Note"
-                }
-              },
-              {
-                "type": "sequential",
-                "data": {
-                  "commands": [
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "JPK-Move2a"
-                      }
-                    },
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "JPK-Move2b"
-                      }
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Podium Shot Position"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Podium Shot"
-          }
-        },
-        {
-          "type": "parallel",
-          "data": {
-            "commands": [
-              {
-                "type": "named",
-                "data": {
-                  "name": "Intake Note"
-                }
-              },
-              {
                 "type": "path",
                 "data": {
-                  "pathName": "JPK-Move3a"
+                  "pathName": "Move_Out-3"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intake Note"
                 }
               }
             ]
@@ -99,7 +62,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "JPK-Move3b"
+                  "pathName": "3-Score"
                 }
               },
               {
@@ -116,10 +79,54 @@
           "data": {
             "name": "Podium Shot"
           }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Score-8"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intake Note"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "8-Shoot"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Shoot Position"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot Note"
+          }
         }
       ]
     }
   },
-  "folder": "Testing",
+  "folder": "Source Autos",
   "choreoAuto": false
 }

@@ -55,11 +55,11 @@ public class ShooterSubsystem extends SubsystemBase {
     shooterNeo1.enableVoltageCompensation(11.5);
     shooterNeo2.enableVoltageCompensation(11.5);
     // PID coefficients
-    kP = 0.000150;// * 2; **times two for amp
+    kP = 0.000150 * 1.5;// * 2; **times two for amp
     kI = 0;
     kD = 0;
     kIz = 0;
-    kFF = 0.000155;
+    kFF = 0.00016; //0.000155
     kMaxOutput = 1;
     kMinOutput = -1;
     maxRPM = 5700;
@@ -271,6 +271,9 @@ public class ShooterSubsystem extends SubsystemBase {
     // This method will be called once per scheduler run
     //SmartDashboard.putNumber("Position 2", shooterNeoEncoder2.getPosition());
     //SmartDashboard.putNumber("Position 1", shooterNeoEncoder1.getPosition());
+    SmartDashboard.putBoolean("Shooter Up To Speed", shooterIsUpToSpeed());
+    SmartDashboard.putNumber("Velocity 1", shooterNeoEncoder1.getVelocity());
+    SmartDashboard.putNumber("Velocity 2", shooterNeoEncoder2.getVelocity());
   }
 
   @Override

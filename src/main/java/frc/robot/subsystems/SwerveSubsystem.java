@@ -56,7 +56,7 @@ public class SwerveSubsystem extends SubsystemBase {
     private final Field2d m_field = new Field2d();
     private final SwerveDrivePoseEstimator odometry;
     private final AHRS gyro = new AHRS(SPI.Port.kMXP);
-    private final PIDController thetaController = new PIDController(0, 0, 0);
+    private final PIDController thetaController = new PIDController(0.05, 0, 0);
 
     private double prev_vel = 0;
     private double prev_timestamp = 0;
@@ -205,8 +205,12 @@ public class SwerveSubsystem extends SubsystemBase {
         return odometry.getEstimatedPosition();
     }
 
-    public Command setRotationOverride(boolean override){
-        return runOnce(()-> rotationOverride = override);
+    public void startRotationOverride(){
+        rotationOverride = true;
+    }
+
+    public void endRotationOverride(){
+        rotationOverride = false;
     }
 
 
@@ -307,7 +311,60 @@ public class SwerveSubsystem extends SubsystemBase {
 
     public int getSpeakerId(){
         if(isFlipped()) return 4;
-        else return 8;
+        else return 7;
+    }
+
+    public Double getDistanceToSpeakerTag(){
+        var result = camera.getLatestResult();
+        if(!result.hasTargets()) return null;
+        
+        else{
+            // Get a list of currently tracked targets.
+            List<PhotonTrackedTarget> targets = result.getTargets();
+
+            for(PhotonTrackedTarget target : targets){
+                if(target.getFiducialId() == getSpeakerId()){
+                    Double distance = target.getBestCameraToTarget().getTranslation().getNorm();
+                    SmartDashboard.putNumber("distance", distance);
+                    return distance;
+                }
+            }
+        }
+        return null;
+    }
+
+    public double getPitchToSpeaker(){
+        double pitchFromSubwoofer = 1.05;
+        double distanceFromSubwoofer = 0;
+
+        double pitchFromPodium = Math.toRadians(40);
+        double distanceFromPodium = 0;
+
+        double y_intercept = 0;
+
+        double slope_pitch = (pitchFromPodium - pitchFromSubwoofer)/(distanceFromPodium - distanceFromSubwoofer);
+
+        Double distance = getDistanceToSpeakerTag();
+        if(getDistanceToSpeakerTag() == null) return Math.toRadians(40);
+        double convertedDistance = distance.doubleValue();
+        return convertedDistance * slope_pitch + y_intercept;
+    }
+
+    public double getRPMToSpeaker(){
+        double RPM_FromSubwoofer = 2222;
+        double distanceFromSubwoofer = 0;
+
+        double RPM_FromPodium = 3000;
+        double distanceFromPodium = 0;
+
+        double y_intercept = 0;
+
+        double slope_RPM = (RPM_FromPodium - RPM_FromSubwoofer) / (distanceFromPodium - distanceFromSubwoofer);
+
+        Double distance = getDistanceToSpeakerTag();
+        if(getDistanceToSpeakerTag() == null) return Math.toRadians(40);
+        double convertedDistance = distance.doubleValue();
+        return convertedDistance * slope_RPM + y_intercept;
     }
 
     public Rotation2d getRotationToSpeaker(){
@@ -321,7 +378,7 @@ public class SwerveSubsystem extends SubsystemBase {
                 if(target.getFiducialId() == getSpeakerId()) {
                     double yaw = target.getYaw();
                     SmartDashboard.putNumber("Yaw", yaw);
-                    return new Rotation2d(yaw);
+                    return new Rotation2d(yaw * Math.PI/180);
                 };
             }
         }
@@ -333,12 +390,15 @@ public class SwerveSubsystem extends SubsystemBase {
      * Drives swerve given chassis speeds
      */
     public void driveSwerve(ChassisSpeeds chassisSpeeds) {
-        ChassisSpeeds newSpeeds = chassisSpeeds;
+        ChassisSpeeds newSpeeds = new ChassisSpeeds(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond, chassisSpeeds.omegaRadiansPerSecond);
         if(rotationOverride){
+            SmartDashboard.putBoolean("override", true);
             Rotation2d rotation = getRotationToSpeaker();
             if(rotation != null){ // If we can see the speaker tag
-                double currentRotation = getPose().getRotation().getDegrees();
-                double ROTATION_PID_OUTPUT = thetaController.calculate(currentRotation, currentRotation + rotation.getDegrees());
+                double currentRotation = getGyroHeading().getDegrees();
+                double ROTATION_PID_OUTPUT = thetaController.calculate(currentRotation, currentRotation - rotation.getDegrees());
+                SmartDashboard.putNumber("CURRENT ROTATION", currentRotation);
+                SmartDashboard.putNumber("SETPOINT ROTATION", currentRotation - rotation.getDegrees());
                 SmartDashboard.putNumber("ROTATION_PID_OUTPUT", ROTATION_PID_OUTPUT);
                 newSpeeds = new ChassisSpeeds(
                                 chassisSpeeds.vxMetersPerSecond, 
@@ -346,6 +406,8 @@ public class SwerveSubsystem extends SubsystemBase {
                                 MathUtil.clamp(ROTATION_PID_OUTPUT, -1, 1) * Constants.Swerve.MAX_ANGULAR_SPEED_METERS_PER_SECOND
                             );
             }
+        }else{
+            SmartDashboard.putBoolean("override", false);
         }
         
         // discretizes the chassis speeds (acccounts for robot skew)
@@ -476,7 +538,7 @@ public class SwerveSubsystem extends SubsystemBase {
             getGyroHeading(),
             getModulePositions());
 
-        updateVision();
+        //updateVision();
 
         m_field.setRobotPose(getPose());
 
@@ -484,6 +546,8 @@ public class SwerveSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("max acceleration", max_accel);
         SmartDashboard.putNumber("Current acceleration", accel);
         SmartDashboard.putString("Robot Pose", odometry.getEstimatedPosition().toString());
+
+        SmartDashboard.putBoolean("Rotation Override", rotationOverride);
     }
 
 

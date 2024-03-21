@@ -10,13 +10,12 @@
     "Source Paths"
   ],
   "autoFolders": [
-    "Amp Autos",
     "Middle Autos",
-    "Testing",
-    "Source Autos"
+    "Source Autos",
+    "Amp Autos"
   ],
   "defaultMaxVel": 4.49,
-  "defaultMaxAccel": 2.0,
+  "defaultMaxAccel": 2.2,
   "defaultMaxAngVel": 540.0,
   "defaultMaxAngAccel": 500.0,
   "maxModuleSpeed": 4.49

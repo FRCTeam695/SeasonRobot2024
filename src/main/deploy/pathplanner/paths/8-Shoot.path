@@ -3,25 +3,25 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 2.7,
-        "y": 4.05
+        "x": 8.27,
+        "y": 0.77
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.136506425308017,
-        "y": 4.1382033891294245
+        "x": 7.342763916297065,
+        "y": 0.7301537679998451
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 0.75,
-        "y": 4.43
+        "x": 0.8404486039741327,
+        "y": 4.4795920361071495
       },
       "prevControl": {
-        "x": 1.2933990244570825,
-        "y": 4.282202966441556
+        "x": 1.2647271448389068,
+        "y": 3.927043238701862
       },
       "nextControl": null,
       "isLocked": false,
@@ -30,28 +30,10 @@
   ],
   "rotationTargets": [],
   "constraintZones": [],
-  "eventMarkers": [
-    {
-      "name": "Arm to Position",
-      "waypointRelativePos": 0.4,
-      "command": {
-        "type": "parallel",
-        "data": {
-          "commands": [
-            {
-              "type": "named",
-              "data": {
-                "name": "Shoot Position"
-              }
-            }
-          ]
-        }
-      }
-    }
-  ],
+  "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 4.49,
-    "maxAcceleration": 2.0,
+    "maxAcceleration": 2.2,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 500.0
   },
