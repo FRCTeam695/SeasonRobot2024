@@ -5,12 +5,9 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
 import java.util.List;
-import java.util.Optional;
 
-import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
-import org.photonvision.PhotonPoseEstimator;
-import org.photonvision.PhotonPoseEstimator.PoseStrategy;
+
 import org.photonvision.targeting.PhotonTrackedTarget;
 
 import com.kauailabs.navx.frc.AHRS;
@@ -27,8 +24,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
+
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -51,7 +47,6 @@ public class SwerveSubsystem extends SubsystemBase {
     private final SwerveModule bottomRight;
 
     private final PhotonCamera camera;
-    private final PhotonPoseEstimator photonPoseEstimator;
 
     private final Field2d m_field = new Field2d();
     private final SwerveDrivePoseEstimator odometry;
@@ -81,15 +76,7 @@ public class SwerveSubsystem extends SubsystemBase {
         modules[3] = bottomRight;
 
         camera = new PhotonCamera("Arducam_OV9281_USB_Camera");
-        photonPoseEstimator = new PhotonPoseEstimator(
-                                            Constants.Feild.APRIL_TAG_FIELD_LAYOUT, 
-                                            PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, 
-                                            camera, 
-                                            Constants.Vision.robotToCamera
-                                        );
 
-        Matrix<N3, N1> stateStdDevs = VecBuilder.fill(0.1, 0.1, 0.005);
-        Matrix<N3, N1> visionStdDevs = VecBuilder.fill(0., 0., 0.);
 
         odometry = new SwerveDrivePoseEstimator
                         (
@@ -97,8 +84,6 @@ public class SwerveSubsystem extends SubsystemBase {
                             getGyroHeading(),
                             getModulePositions(), 
                             new Pose2d()
-                            //stateStdDevs,
-                            //visionStdDevs
                         );
 
         
@@ -325,7 +310,6 @@ public class SwerveSubsystem extends SubsystemBase {
             for(PhotonTrackedTarget target : targets){
                 if(target.getFiducialId() == getSpeakerId()){
                     Double distance = target.getBestCameraToTarget().getTranslation().getNorm();
-                    SmartDashboard.putNumber("distance", distance);
                     return distance;
                 }
             }
@@ -345,7 +329,7 @@ public class SwerveSubsystem extends SubsystemBase {
         double slope_pitch = (pitchFromPodium - pitchFromSubwoofer)/(distanceFromPodium - distanceFromSubwoofer);
 
         Double distance = getDistanceToSpeakerTag();
-        if(getDistanceToSpeakerTag() == null) return Math.toRadians(40);
+        if(getDistanceToSpeakerTag() == null) return Math.toRadians(42);
         double convertedDistance = distance.doubleValue();
         return convertedDistance * slope_pitch + y_intercept;
     }
@@ -452,75 +436,6 @@ public class SwerveSubsystem extends SubsystemBase {
         );
     }
 
-    public void updateVision(){
-        var result = camera.getLatestResult();
-
-        if(result.hasTargets()) { //}  && getPose().getX() >= 12.5){
-            // double cameraToTagDistance = result.getBestTarget().getBestCameraToTarget().getTranslation().getDistance(new Translation3d());
-
-            Optional<EstimatedRobotPose> poseEstimatorResult = photonPoseEstimator.update(result);
-
-            if(poseEstimatorResult.isPresent()){
-                var estimatedPose = poseEstimatorResult.get();
-                var estimatedPose2d = estimatedPose.estimatedPose.toPose2d();
-                var targets = estimatedPose.targetsUsed;
-
-                
-
-                // Translation2d visionTranslation = estimatedPose2d.getTranslation();
-                // Translation2d currentEstimatedTranslation = getPose().getTranslation();
-
-                // double visionToCurrentPoseError = visionTranslation.getDistance(currentEstimatedTranslation);
-                // SmartDashboard.putNumber("distance", cameraToTagDistance);
-                // SmartDashboard.putNumber("error", visionToCurrentPoseError);
-                if((result.getTargets().size() > 1) && targets != null){ //){
-                    double minDistance = Double.MAX_VALUE;
-                    double maxDistance = 0.;
-                    double maxAmbiguity = 0.;
-
-                    for(PhotonTrackedTarget target : targets){
-                        double distance = target.getBestCameraToTarget().getTranslation().getNorm();
-                        double ambiguity = target.getPoseAmbiguity();
-
-                        if(distance < minDistance) minDistance = distance;
-                        if(distance > maxDistance) maxDistance = distance;
-                        if(ambiguity > maxAmbiguity) maxAmbiguity = ambiguity;
-
-                        SmartDashboard.putNumber("Target #" + target.getFiducialId(), ambiguity);
-                    }
-
-                    SmartDashboard.putNumber("Distance min", minDistance);
-                    SmartDashboard.putNumber("Distance max", maxDistance);
-
-                    SmartDashboard.putNumber("Max Ambiguity", maxAmbiguity);
-                    if(maxAmbiguity < 0.2){
-                        // odometry.addVisionMeasurement(
-                        //         estimatedPose2d, 
-                        //         poseEstimatorResult.get().timestampSeconds//,
-                                //getNewVisionStdDevs(minDistance)
-                        //getNewVisionStdDevs(cameraToTagDistance)
-                    //);
-                        // override vision rotation with gyro
-                        // odometry.addVisionMeasurement(
-                        //     new Pose2d(estimatedPose2d.getX(), estimatedPose2d.getY(), getGyroHeading()), 
-                        //     poseEstimatorResult.get().timestampSeconds);
-                    }
-                    
-                    // // original
-                    // odometry.addVisionMeasurement(
-                    //    estimatedPose2d, 
-                    //    poseEstimatorResult.get().timestampSeconds,
-                    //    getNewVisionStdDevs(minDistance)
-                    //     //getNewVisionStdDevs(cameraToTagDistance)
-                    // );
-
-                    SmartDashboard.putString("Vision Pose", estimatedPose2d.toString());
-                }
-            }
-        }
-    }
-
-
     @Override
     public void periodic() {
         SmartDashboard.putBoolean("Is Red", isFlipped());
@@ -548,6 +463,9 @@ public class SwerveSubsystem extends SubsystemBase {
         SmartDashboard.putString("Robot Pose", odometry.getEstimatedPosition().toString());
 
         SmartDashboard.putBoolean("Rotation Override", rotationOverride);
+        SmartDashboard.putNumber("Distance To Speaker", getDistanceToSpeakerTag());
+        SmartDashboard.putNumber("Pitch to Speaker", getPitchToSpeaker());
+        SmartDashboard.putNumber("RPM to Speaker", getRPMToSpeaker());
     }
 
 
