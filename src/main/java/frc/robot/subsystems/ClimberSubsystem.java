@@ -27,8 +27,8 @@ public class ClimberSubsystem extends SubsystemBase {
   private float stringLengthLimit2;
 
   public ClimberSubsystem() {
-    stringLengthLimit1 = (float)6.6;
-    stringLengthLimit2 = (float)6.6;
+    stringLengthLimit1 = (float)8.77;
+    stringLengthLimit2 = (float)8.48;
 
     climberMotor1 = new CANSparkMax(Constants.Climber.CLIMBER_MOTOR_ID_1, MotorType.kBrushless);
     climberMotor2 = new CANSparkMax(Constants.Climber.CLIMBER_MOTOR_ID_2, MotorType.kBrushless);

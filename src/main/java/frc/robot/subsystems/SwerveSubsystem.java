@@ -56,7 +56,7 @@ public class SwerveSubsystem extends SubsystemBase {
     private final Field2d m_field = new Field2d();
     private final SwerveDrivePoseEstimator odometry;
     private final AHRS gyro = new AHRS(SPI.Port.kMXP);
-    private final PIDController thetaController = new PIDController(0.05, 0, 0);
+    private final PIDController thetaController = new PIDController(0.04, 0, 0);
 
     private double prev_vel = 0;
     private double prev_timestamp = 0;
