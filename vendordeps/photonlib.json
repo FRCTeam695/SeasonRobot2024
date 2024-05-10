@@ -17,6 +17,7 @@
             "version": "v2024.2.9",
             "libName": "photonlib",
             "headerClassifier": "headers",
+            
             "sharedLibrary": true,
             "skipInvalidPlatforms": true,
             "binaryPlatforms": [

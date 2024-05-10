@@ -83,7 +83,7 @@ public class RobotContainer {
 
 
   // Triggers
-  private final Trigger shoot_Trigger = new Trigger(()-> (right_Trigger.getAsDouble() > .60));
+  private final Trigger shoot_Trigger = new Trigger(()-> (right_Trigger.getAsDouble() > .14));
   private final Trigger special_Shot_Trigger = new Trigger(()-> (left_Trigger.getAsDouble() > 0.30));
   private final Trigger podium_shot_Trigger = new Trigger(() -> (right_Trigger_Operator.getAsDouble() > .60) );
 
@@ -98,6 +98,7 @@ public class RobotContainer {
     NamedCommands.registerCommand("Podium Shot Position", armToPosition(Math.toRadians(41)));
     NamedCommands.registerCommand("Shoot Position", armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS));
     NamedCommands.registerCommand("Shoot Hard Position", armToPosition(Units.degreesToRadians(43)));
+    SmartDashboard.putNumber("Offset", 0);
 
     autoChooser = AutoBuilder.buildAutoChooser();
 
@@ -105,13 +106,16 @@ public class RobotContainer {
     defaultCommands();
 
     SmartDashboard.putData("Auto Chooser", autoChooser);
-    SmartDashboard.putData("Swerve Subsystem", Swerve);
-    SmartDashboard.putData("Intake Subsystem", Intake);
-    SmartDashboard.putData("Shooter Subsystem", Shooter);
+    // SmartDashboard.putData("Swerve Subsystem", Swerve);
+    // SmartDashboard.putData("Intake Subsystem", Intake);
+    // SmartDashboard.putData("Shooter Subsystem", Shooter);
     SmartDashboard.putNumber("vel", 0);
   }
 
   private void configureBindings() {
+
+    y_Button_Climber.whileTrue(run(()-> Intake.runIntakeToSpeed(-0.25)));
+
      y_Button.onTrue(
       //AmpBar.closedLoopControl(12.1)
        armToPosition(Constants.Arm.PODIUM_SHOT_POSITION_RADIANS) //changed from 42
@@ -124,7 +128,7 @@ public class RobotContainer {
      * 
      * 
      */  
-    b_Button.onTrue(AmpBar.closedLoopControl(0));
+    b_Button.onTrue(armToPosition(Constants.Arm.INTAKE_POSITION_RADIANS));
 
      /*
     y_Button_Climber.onTrue(armToPosition(Constants.Arm.AMP_SCORE_RADIANS)
@@ -170,7 +174,7 @@ public class RobotContainer {
       (
         parallel
         (
-          armToPosition(Constants.Arm.PODIUM_SHOT_POSITION_RADIANS), //armToPosition(Swerve.getPitchToSpeaker()),
+          armToPosition(Constants.Arm.PODIUM_SHOT_POSITION_RADIANS + Math.toRadians(SmartDashboard.getNumber("Offset", 0))), //armToPosition(Swerve.getPitchToSpeaker()),
           spinShooterToSpeed(3000) //spinShooterToSpeed(1000) 
         )
       )
@@ -323,7 +327,8 @@ public class RobotContainer {
      * We use closed loop control instead of run velocity because it while fight better,
      * keeps the note in place nicely
      */
-    Shooter.setDefaultCommand(Shooter.runVelocity(()-> 0));
+    //Shooter.setDefaultCommand(Shooter.runVelocity(()-> 0));
+    Shooter.setDefaultCommand(Shooter.runVelocity(()-> SmartDashboard.getNumber("vel", 0)));
 
     /*
      * Default command for the intake, this ensures that
@@ -574,7 +579,7 @@ public class RobotContainer {
         Map.entry("speaker", 
 
           // Moves the arm into position for shooting
-          armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS)
+          armToPosition(Constants.Arm.SHOOT_POSITION_RADIANS + Math.toRadians(SmartDashboard.getNumber("Offset", 0)))
 
           // Shoots the note into speaker
           .andThen(shoot(Constants.Shooter.RPM_SPEAKER)).withTimeout(2)

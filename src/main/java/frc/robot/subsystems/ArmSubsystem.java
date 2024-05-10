@@ -72,7 +72,7 @@ public class ArmSubsystem extends SubsystemBase {
   }
 
   private double getAbsolutePosition(){
-    return 2 * Math.PI * (Constants.Arm.ABSOLUTE_ENCODER_OFFSET - m_encoder.getAbsolutePosition()) / 3;
+    return Constants.Arm.ABSOLUTE_ENCODER_OFFSET_RADIANS - 2 * Math.PI * (m_encoder.getAbsolutePosition()) / 3;
   }
 
   public boolean atGoal(){
@@ -111,7 +111,7 @@ public class ArmSubsystem extends SubsystemBase {
   
   @Override
   public void periodic(){
-    SmartDashboard.putNumber("ARM ENCODER POSITION", getAbsolutePosition());
+    SmartDashboard.putNumber("ARM ENCODER POSITION", Math.toDegrees(getAbsolutePosition()));
     SmartDashboard.putNumber("Arm Goal", goal);
     SmartDashboard.putBoolean("AT GOAL", atGoal());
     // SmartDashboard.putNumber("ARM ENCODER RAW", m_encoder.getAbsolutePosition());

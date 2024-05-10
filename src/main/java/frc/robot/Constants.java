@@ -128,7 +128,7 @@ public final class Constants {
         public static final double MAX_VELOCITY = 3;
         public static final double MAX_ACCELERATION = 10;
 
-        public static final double ABSOLUTE_ENCODER_OFFSET = 1.0435;
+        public static final double ABSOLUTE_ENCODER_OFFSET_RADIANS = -Math.toRadians(-23.664193) + Math.PI/2;//(Math.PI/2) + 0.552;//1.0435;
 
         public static final double KP = 1.5;
         public static final double KD = 0;
@@ -149,9 +149,9 @@ public final class Constants {
         // public static final double KA = 0.;
 
         public static final double STOCKPILE_POSITION_RADIANS = 0.3;
-        public static final double INTAKE_POSITION_RADIANS = 0.99;
+        public static final double INTAKE_POSITION_RADIANS = 0.99;//0.876;//(0.928 + 0.864)/2.0;//1.18;//0.898;//0.919;//0.99; //0.928
         public static final double SHOOT_POSITION_RADIANS = 1.05;
-        public static final double AMP_SCORE_RADIANS = Math.toRadians(120);//Math.toRadians(116.5);//2.08;
+        public static final double AMP_SCORE_RADIANS = 2.012;//Math.toRadians(120);//Math.toRadians(116.5);//2.08;
         public static final double FENDER_SHOT_POSITION_RADIANS = 0;
         public static final double PODIUM_SHOT_POSITION_RADIANS = Math.toRadians(42);
 
